@@ -83,4 +83,22 @@ class ReferralRepository extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  void addCounterReferral(String referralId, String instructions) {
+    final idx = _referrals.indexWhere((r) => r.id == referralId);
+    if (idx != -1) {
+      _referrals[idx] = _referrals[idx].copyWith(
+        status: 'COUNTER_REFERRED',
+        counterReferralInstructions: instructions,
+      );
+      if (_cache.isOffline) {
+        _cache.queueMutation('REFERRAL', 'COUNTER_REFERRAL', {
+          'id': referralId,
+          'instructions': instructions,
+          'status': 'COUNTER_REFERRED',
+        });
+      }
+      notifyListeners();
+    }
+  }
 }
