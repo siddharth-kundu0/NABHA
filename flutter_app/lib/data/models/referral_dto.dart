@@ -58,6 +58,8 @@ class ReferralDto {
     }
   }
 
+  String get statusDisplay => statusLabel;
+
   ReferralDto copyWith({
     String? status,
     bool? isOverdue,
