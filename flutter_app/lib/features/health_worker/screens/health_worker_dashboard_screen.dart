@@ -6,7 +6,6 @@ import 'package:ruralcare/data/repositories/referral_repository.dart';
 import 'vitals_collection_screen.dart';
 import 'digital_triage_screen.dart';
 import 'maternal_care_screen.dart';
-import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
 
 class HealthWorkerDashboardScreen extends StatelessWidget {
   const HealthWorkerDashboardScreen({super.key});

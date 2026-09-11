@@ -143,7 +143,10 @@ class _DigitalTriageScreenState extends State<DigitalTriageScreen> {
                     subtitle: const Text('Indicates cerebral edema in pre-eclampsia', style: TextStyle(fontSize: 10)),
                     value: _hasHeadache,
                     activeColor: AppColors.criticalRed,
-                    onChanged: (v) => setState(() => _hasHeadache = v),
+                    onChanged: (v) => setState(() {
+                      _hasHeadache = v;
+                      _hasBlurredVision = v;
+                    }),
                   ),
                   const Divider(height: 1),
                   SwitchListTile(

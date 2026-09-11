@@ -39,12 +39,11 @@ class PatientProfileScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 _buildSectionHeader('Assigned Care Network'),
                 _buildInfoTile('Assigned ASHA Worker', patient.assignedAsha, Icons.volunteer_activism),
-                if (patient.emergencyContact != null)
-                  _buildInfoTile(
-                    'Emergency Contact',
-                    '${patient.emergencyContact!.name} (${patient.emergencyContact!.relationship})\n${patient.emergencyContact!.phoneNumber}',
-                    Icons.contact_phone,
-                  ),
+                _buildInfoTile(
+                  'Emergency Contact',
+                  '${patient.emergencyContact.name} (${patient.emergencyContact.relationship})\n${patient.emergencyContact.phoneNumber}',
+                  Icons.contact_phone,
+                ),
                 const SizedBox(height: 16),
                 _buildSectionHeader('Offline & Connectivity Settings'),
                 SwitchListTile(

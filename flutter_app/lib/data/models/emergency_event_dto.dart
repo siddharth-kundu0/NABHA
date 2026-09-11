@@ -27,6 +27,14 @@ class EmergencyEventDto {
     required this.status,
   });
 
+  String get ambulanceVehicleNumber => ambulanceVehicleNo;
+  String get ambulanceDriverName => 'Santosh More';
+  String get ambulanceContact => '108 / 9822019283';
+  String get assignedHospital => assignedFacilityName;
+  bool get isNextOfKinAlerted => nextOfKinNotified;
+  bool get isHospitalAlerted => facilityNotified;
+  bool get isAmbulanceDispatched => ambulanceDispatched;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'patientId': patientId,

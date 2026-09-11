@@ -179,7 +179,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             ),
             const SizedBox(height: 8),
             Text(apt.patientName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            Text('Age 26 • 32 Wks Gestation • Village: Kashti', style: const TextStyle(fontSize: 11, color: AppColors.neutral600)),
+            const Text('Age 26 • 32 Wks Gestation • Village: Kashti', style: TextStyle(fontSize: 11, color: AppColors.neutral600)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(8),

@@ -55,6 +55,8 @@ venv.bak/
 **/.dart_tool/
 **/.packages
 **/.pub/
+**/.flutter-plugins*
+**/pubspec.lock
 
 # IDE / Editor
 .idea/

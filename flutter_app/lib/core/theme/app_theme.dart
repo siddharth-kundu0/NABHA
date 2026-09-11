@@ -84,7 +84,7 @@ class RuralCareTheme {
         elevation: 0,
         centerTitle: false,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: RuralCareColors.surfaceWhite,
         elevation: 0,
         shape: RoundedRectangleBorder(

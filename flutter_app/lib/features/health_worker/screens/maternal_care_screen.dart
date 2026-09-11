@@ -60,7 +60,7 @@ class _MaternalCareScreenState extends State<MaternalCareScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text('Gestational Age: ${patient.gestationalAgeWeeks} Weeks (3rd Trimester)', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text('Estimated Delivery Date (EDD): in 56 Days', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
+                  const Text('Estimated Delivery Date (EDD): in 56 Days', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
                   const Divider(color: Colors.white24, height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

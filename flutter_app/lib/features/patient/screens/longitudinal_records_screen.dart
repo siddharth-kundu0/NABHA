@@ -134,7 +134,7 @@ class _LongitudinalRecordsScreenState extends State<LongitudinalRecordsScreen> w
                         ],
                       ),
                     )),
-                if (rx.adviceNotes.isNotEmpty) ...[
+                if (rx.adviceNotes?.isNotEmpty == true) ...[
                   const SizedBox(height: 8),
                   Text('Doctor\'s Advice: ${rx.adviceNotes}', style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.neutral700)),
                 ],

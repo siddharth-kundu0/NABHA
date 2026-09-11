@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
-import 'package:ruralcare/data/repositories/appointment_repository.dart';
 
 class LiveTeleconsultRoomScreen extends StatefulWidget {
   final String patientName;
@@ -289,7 +288,7 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
   }) {
     return InkWell(
       onTap: onTap,
-      shape: const CircleBorder(),
+      customBorder: const CircleBorder(),
       child: Container(
         width: 50,
         height: 50,

@@ -50,7 +50,7 @@ class ReferralTrackerScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 _buildMilestoneTimeline(context, referral),
                 const SizedBox(height: 16),
-                if (referral.counterReferralInstructions.isNotEmpty)
+                if (referral.counterReferralInstructions?.isNotEmpty == true)
                   _buildCounterReferralCard(context, referral),
                 const SizedBox(height: 24),
               ],
@@ -332,7 +332,7 @@ class ReferralTrackerScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            referral.counterReferralInstructions,
+            referral.counterReferralInstructions ?? '',
             style: const TextStyle(fontSize: 12, color: Color(0xFF064E3B), height: 1.4),
           ),
         ],

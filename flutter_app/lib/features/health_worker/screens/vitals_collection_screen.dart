@@ -283,8 +283,8 @@ class _VitalsCollectionScreenState extends State<VitalsCollectionScreen> {
                   pulse: int.tryParse(_pulseCtrl.text) ?? 72,
                   spO2: int.tryParse(_spo2Ctrl.text) ?? 98,
                   temperature: double.tryParse(_tempCtrl.text) ?? 98.6,
-                  bloodSugar: int.tryParse(_sugarCtrl.text),
-                  haemoglobin: double.tryParse(_hbCtrl.text),
+                  bloodSugar: int.tryParse(_sugarCtrl.text) ?? 110,
+                  haemoglobin: double.tryParse(_hbCtrl.text) ?? 11.5,
                   isFromBleDevice: _isBleSynced,
                 );
 

@@ -145,7 +145,7 @@ class _DiagnosticLocatorScreenState extends State<DiagnosticLocatorScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Timings: 08:00 AM - 04:00 PM', style: const TextStyle(fontSize: 11, color: AppColors.neutral600)),
+                                const Text('Timings: 08:00 AM - 04:00 PM', style: TextStyle(fontSize: 11, color: AppColors.neutral600)),
                                 ElevatedButton(
                                   onPressed: () {
                                     ScaffoldMessenger.of(context).showSnackBar(
