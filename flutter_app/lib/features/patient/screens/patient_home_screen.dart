@@ -7,6 +7,10 @@ import 'medicine_availability_screen.dart';
 import 'diagnostic_locator_screen.dart';
 import 'package:ruralcare/features/teleconsult/screens/live_teleconsult_room_screen.dart';
 import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
+import 'package:ruralcare/data/models/patient_dto.dart';
+import 'package:ruralcare/data/models/vitals_dto.dart';
+import 'package:ruralcare/data/models/appointment_dto.dart';
+import 'package:ruralcare/data/models/referral_dto.dart';
 
 class PatientHomeScreen extends StatelessWidget {
   const PatientHomeScreen({super.key});
@@ -92,7 +96,7 @@ class PatientHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActiveReferralBanner(BuildContext context, dynamic referral) {
+  Widget _buildActiveReferralBanner(BuildContext context, ReferralDto referral) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -144,7 +148,7 @@ class PatientHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildVitalsCard(BuildContext context, dynamic patient, dynamic vitals) {
+  Widget _buildVitalsCard(BuildContext context, PatientDto patient, VitalsDto? vitals) {
     final hasWarning = vitals != null && vitals.hasWarning;
 
     return Card(
@@ -192,7 +196,7 @@ class PatientHomeScreen extends StatelessWidget {
               Row(
                 children: [
                   _vitalItem('Blood Pressure', '${vitals.systolicBp}/${vitals.diastolicBp} mmHg', isElevated: vitals.systolicBp > 140 || vitals.diastolicBp > 90),
-                  _vitalItem('Haemoglobin', '${vitals.haemoglobin ?? "--"} g/dL', isElevated: (vitals.haemoglobin ?? 12) < 9.0),
+                  _vitalItem('Haemoglobin', '${vitals.haemoglobin} g/dL', isElevated: vitals.haemoglobin < 9.0),
                   _vitalItem('SpO2', '${vitals.spO2}%', isElevated: vitals.spO2 < 95),
                 ],
               ),
@@ -200,7 +204,7 @@ class PatientHomeScreen extends StatelessWidget {
               Row(
                 children: [
                   _vitalItem('Pulse Rate', '${vitals.pulse} bpm'),
-                  _vitalItem('Random Sugar', '${vitals.bloodSugar ?? "--"} mg/dL'),
+                  _vitalItem('Random Sugar', '${vitals.bloodSugar} mg/dL'),
                   _vitalItem('Temperature', '${vitals.temperature}°F'),
                 ],
               ),
@@ -245,7 +249,7 @@ class PatientHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingAppointmentCard(BuildContext context, dynamic apt) {
+  Widget _buildUpcomingAppointmentCard(BuildContext context, AppointmentDto apt) {
     return Card(
       color: AppColors.forestTealLight.withOpacity(0.12),
       shape: RoundedRectangleBorder(

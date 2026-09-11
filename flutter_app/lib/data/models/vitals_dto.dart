@@ -46,6 +46,8 @@ class VitalsDto {
     return false;
   }
 
+  bool get hasWarning => isHighRisk || isEmergency;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'patientId': patientId,
