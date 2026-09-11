@@ -59,6 +59,27 @@ class AppColors {
   static const Color neutral700 = Color(0xFF374151);
   static const Color neutral800 = Color(0xFF1F2937);
   static const Color neutral900 = Color(0xFF111827);
+
+  // Stitch Design Tokens (projects/11527010656056033627)
+  static const Color stitchPrimary = Color(0xFF005140);
+  static const Color stitchPrimaryContainer = Color(0xFF0A6B56);
+  static const Color stitchOnPrimaryContainer = Color(0xFF97E8CE);
+  static const Color stitchSurface = Color(0xFFF8F9FF);
+  static const Color stitchSurfaceContainerLowest = Color(0xFFFFFFFF);
+  static const Color stitchSurfaceContainerLow = Color(0xFFEFF4FF);
+  static const Color stitchSurfaceContainer = Color(0xFFE6EEFF);
+  static const Color stitchSurfaceContainerHigh = Color(0xFFDCE9FF);
+  static const Color stitchOnSurface = Color(0xFF0D1C2E);
+  static const Color stitchWarning = Color(0xFFB45309);
+  static const Color stitchWarningBg = Color(0xFFFEF3C7);
+  static const Color stitchCritical = Color(0xFFBA1A1A);
+  static const Color stitchCriticalBg = Color(0xFFFFDAD6);
+
+  static const LinearGradient priorityGradient = LinearGradient(
+    colors: [Color(0xFF0F3D6E), Color(0xFF104A7B), Color(0xFF0A2E52)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }
 
 class RuralCareTheme {
