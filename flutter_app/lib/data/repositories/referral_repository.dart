@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ruralcare/data/models/referral_dto.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ReferralRepository extends ChangeNotifier {
   static final ReferralRepository _instance = ReferralRepository._internal();
@@ -71,6 +72,13 @@ class ReferralRepository extends ChangeNotifier {
       _referrals[idx] = current.copyWith(status: nextStatus);
       if (_cache.isOffline) {
         _cache.queueMutation('REFERRAL', 'STATUS_UPDATE', {'id': referralId, 'status': nextStatus});
+      } else {
+        try {
+          FirebaseFirestore.instance
+              .collection('referrals')
+              .doc(referralId)
+              .set({'status': nextStatus}, SetOptions(merge: true));
+        } catch (_) {}
       }
       notifyListeners();
     }
@@ -80,6 +88,13 @@ class ReferralRepository extends ChangeNotifier {
     _referrals.insert(0, ref);
     if (_cache.isOffline) {
       _cache.queueMutation('REFERRAL', 'CREATE', ref.toJson());
+    } else {
+      try {
+        FirebaseFirestore.instance
+            .collection('referrals')
+            .doc(ref.id)
+            .set(ref.toJson());
+      } catch (_) {}
     }
     notifyListeners();
   }
@@ -97,6 +112,16 @@ class ReferralRepository extends ChangeNotifier {
           'instructions': instructions,
           'status': 'COUNTER_REFERRED',
         });
+      } else {
+        try {
+          FirebaseFirestore.instance
+              .collection('referrals')
+              .doc(referralId)
+              .set({
+                'status': 'COUNTER_REFERRED',
+                'counterReferralInstructions': instructions,
+              }, SetOptions(merge: true));
+        } catch (_) {}
       }
       notifyListeners();
     }

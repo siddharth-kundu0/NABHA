@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ruralcare/data/models/emergency_event_dto.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EmergencyRepository extends ChangeNotifier {
   static final EmergencyRepository _instance = EmergencyRepository._internal();
@@ -34,6 +35,13 @@ class EmergencyRepository extends ChangeNotifier {
     );
     if (_cache.isOffline) {
       _cache.queueMutation('EMERGENCY', 'TRIGGER', _activeEvent!.toJson());
+    } else {
+      try {
+        FirebaseFirestore.instance
+            .collection('emergency_events')
+            .doc(_activeEvent!.id)
+            .set(_activeEvent!.toJson());
+      } catch (_) {}
     }
     notifyListeners();
   }
@@ -56,6 +64,13 @@ class EmergencyRepository extends ChangeNotifier {
       );
       if (_cache.isOffline) {
         _cache.queueMutation('EMERGENCY', 'RESOLVE', {'id': _activeEvent!.id});
+      } else {
+        try {
+          FirebaseFirestore.instance
+              .collection('emergency_events')
+              .doc(_activeEvent!.id)
+              .set({'status': 'RESOLVED'}, SetOptions(merge: true));
+        } catch (_) {}
       }
       notifyListeners();
     }

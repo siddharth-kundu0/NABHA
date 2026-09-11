@@ -21,3 +21,17 @@ def decode_access_token(token: str) -> Optional[dict[str, Any]]:
         return payload
     except Exception:
         return None
+
+def verify_firebase_token(id_token: str) -> Optional[dict[str, Any]]:
+    """
+    Verifies Firebase-issued identity token using Firebase Admin SDK.
+    Falls back gracefully if admin SDK is in offline development mode.
+    """
+    try:
+        import firebase_admin
+        from firebase_admin import auth
+        decoded_token = auth.verify_id_token(id_token)
+        return decoded_token
+    except Exception:
+        return None
+

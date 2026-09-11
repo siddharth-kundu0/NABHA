@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/models/vitals_dto.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PatientRepository extends ChangeNotifier {
   static final PatientRepository _instance = PatientRepository._internal();
@@ -125,6 +126,15 @@ class PatientRepository extends ChangeNotifier {
 
       if (_cache.isOffline) {
         _cache.queueMutation('PATIENT_VITALS', 'UPDATE', newVitals.toJson());
+      } else {
+        try {
+          FirebaseFirestore.instance
+              .collection('patients')
+              .doc(patientId)
+              .set({'latestVitals': newVitals.toJson()}, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('Firestore patient sync notice: $e');
+        }
       }
       notifyListeners();
     }

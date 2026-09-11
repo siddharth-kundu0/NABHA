@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:ruralcare/data/models/facility_dto.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FacilityRepository extends ChangeNotifier {
   static final FacilityRepository _instance = FacilityRepository._internal();
@@ -97,5 +98,35 @@ class FacilityRepository extends ChangeNotifier {
         hasAmbulanceAvailable: true,
       ),
     ];
+  }
+
+  void updateAvailableBeds(String facilityId, int availableBeds) {
+    final idx = _facilities.indexWhere((f) => f.id == facilityId);
+    if (idx != -1) {
+      final old = _facilities[idx];
+      _facilities[idx] = FacilityDto(
+        id: old.id,
+        name: old.name,
+        type: old.type,
+        distanceKm: old.distanceKm,
+        address: old.address,
+        contactPhone: old.contactPhone,
+        totalBeds: old.totalBeds,
+        availableBeds: availableBeds,
+        onDutySpecialists: old.onDutySpecialists,
+        availableBloodUnits: old.availableBloodUnits,
+        availableDiagnostics: old.availableDiagnostics,
+        availableMedicines: old.availableMedicines,
+        hasEmergencyCapability: old.hasEmergencyCapability,
+        hasAmbulanceAvailable: old.hasAmbulanceAvailable,
+      );
+      try {
+        FirebaseFirestore.instance
+            .collection('facilities')
+            .doc(facilityId)
+            .set({'availableBeds': availableBeds}, SetOptions(merge: true));
+      } catch (_) {}
+      notifyListeners();
+    }
   }
 }
