@@ -1,0 +1,42 @@
+name: ruralcare
+description: "RuralCare — Integrated Rural Healthcare Access, Continuity & Coordination Platform"
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # UI & Design System
+  google_fonts: ^6.2.1
+  lucide_icons: ^0.257.0
+  intl: ^0.19.0
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+
+  # Network & API
+  dio: ^5.4.3+1
+
+  # Local Storage & Offline-First
+  shared_preferences: ^2.2.3
+
+  # Hardware & Sensor Integration (BLE)
+  flutter_blue_plus: ^1.34.5
+
+  # QR Code & Identity
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
