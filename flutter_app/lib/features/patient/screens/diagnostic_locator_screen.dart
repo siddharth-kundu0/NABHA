@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/repositories/facility_repository.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/data/repositories/facility_repository.dart';
 
 class DiagnosticLocatorScreen extends StatefulWidget {
   const DiagnosticLocatorScreen({super.key});

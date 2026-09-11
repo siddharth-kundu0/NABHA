@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/models/emergency_event_dto.dart';
-import '../../data/repositories/emergency_repository.dart';
-import '../../data/repositories/patient_repository.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/data/models/emergency_event_dto.dart';
+import 'package:ruralcare/data/repositories/emergency_repository.dart';
+import 'package:ruralcare/data/repositories/patient_repository.dart';
 
 class EmergencyTrackingScreen extends StatefulWidget {
   const EmergencyTrackingScreen({super.key});

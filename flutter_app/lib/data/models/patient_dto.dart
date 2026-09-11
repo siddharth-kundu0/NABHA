@@ -1,4 +1,4 @@
-import 'vitals_dto.dart';
+import 'package:ruralcare/data/models/vitals_dto.dart';
 
 class EmergencyContactDto {
   final String name;

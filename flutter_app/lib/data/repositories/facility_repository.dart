@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../models/facility_dto.dart';
+import 'package:ruralcare/data/models/facility_dto.dart';
 
 class FacilityRepository extends ChangeNotifier {
   static final FacilityRepository _instance = FacilityRepository._internal();

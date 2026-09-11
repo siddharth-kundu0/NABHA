@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/models/appointment_dto.dart';
-import '../../data/repositories/appointment_repository.dart';
-import '../../data/repositories/patient_repository.dart';
-import '../../data/repositories/facility_repository.dart';
-import '../../features/teleconsult/screens/live_teleconsult_room_screen.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/data/models/appointment_dto.dart';
+import 'package:ruralcare/data/repositories/appointment_repository.dart';
+import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/data/repositories/facility_repository.dart';
+import 'package:ruralcare/features/teleconsult/screens/live_teleconsult_room_screen.dart';
 
 class AppointmentBookingScreen extends StatefulWidget {
   const AppointmentBookingScreen({super.key});

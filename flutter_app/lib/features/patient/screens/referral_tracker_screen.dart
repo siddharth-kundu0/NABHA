@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/models/referral_dto.dart';
-import '../../data/repositories/referral_repository.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/data/models/referral_dto.dart';
+import 'package:ruralcare/data/repositories/referral_repository.dart';
 
 class ReferralTrackerScreen extends StatelessWidget {
   const ReferralTrackerScreen({super.key});

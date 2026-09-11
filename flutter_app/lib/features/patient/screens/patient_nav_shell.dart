@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
 import 'patient_home_screen.dart';
 import 'appointment_booking_screen.dart';
 import 'longitudinal_records_screen.dart';

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/repositories/patient_repository.dart';
-import '../../data/repositories/appointment_repository.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/data/repositories/appointment_repository.dart';
 
 class LiveTeleconsultRoomScreen extends StatefulWidget {
   final String patientName;

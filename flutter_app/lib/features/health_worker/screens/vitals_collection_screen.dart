@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/models/vitals_dto.dart';
-import '../../data/repositories/patient_repository.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/data/models/vitals_dto.dart';
+import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'digital_triage_screen.dart';
 
 class VitalsCollectionScreen extends StatefulWidget {

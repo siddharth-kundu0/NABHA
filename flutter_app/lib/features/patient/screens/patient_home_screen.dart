@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/repositories/patient_repository.dart';
-import '../../data/repositories/appointment_repository.dart';
-import '../../data/repositories/referral_repository.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/data/repositories/appointment_repository.dart';
+import 'package:ruralcare/data/repositories/referral_repository.dart';
 import 'medicine_availability_screen.dart';
 import 'diagnostic_locator_screen.dart';
-import '../../features/teleconsult/screens/live_teleconsult_room_screen.dart';
-import '../../features/emergency/screens/emergency_tracking_screen.dart';
+import 'package:ruralcare/features/teleconsult/screens/live_teleconsult_room_screen.dart';
+import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
 
 class PatientHomeScreen extends StatelessWidget {
   const PatientHomeScreen({super.key});

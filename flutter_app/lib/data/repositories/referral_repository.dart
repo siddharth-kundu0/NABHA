@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import '../models/referral_dto.dart';
-import '../../core/database/local_cache.dart';
+import 'package:ruralcare/data/models/referral_dto.dart';
+import 'package:ruralcare/core/database/local_cache.dart';
 
 class ReferralRepository extends ChangeNotifier {
   static final ReferralRepository _instance = ReferralRepository._internal();

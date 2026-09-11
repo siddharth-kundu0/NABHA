@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import '../models/appointment_dto.dart';
-import '../../core/database/local_cache.dart';
+import 'package:ruralcare/data/models/appointment_dto.dart';
+import 'package:ruralcare/core/database/local_cache.dart';
 
 class AppointmentRepository extends ChangeNotifier {
   static final AppointmentRepository _instance = AppointmentRepository._internal();

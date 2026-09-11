@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'core/theme/app_theme.dart';
-import 'app/app.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/app/app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/theme/demo_role_switcher.dart';
-import '../../core/database/local_cache.dart';
-import '../../data/repositories/patient_repository.dart';
-import '../../app/routes.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/core/theme/demo_role_switcher.dart';
+import 'package:ruralcare/core/database/local_cache.dart';
+import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/app/routes.dart';
 
 class PatientProfileScreen extends StatelessWidget {
   const PatientProfileScreen({super.key});

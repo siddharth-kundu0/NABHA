@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../database/local_cache.dart';
-import 'app_theme.dart';
+import 'package:ruralcare/core/database/local_cache.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
 
 class OfflineStatusBar extends StatelessWidget {
   const OfflineStatusBar({super.key});

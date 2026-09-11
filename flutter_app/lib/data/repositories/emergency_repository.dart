@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import '../models/emergency_event_dto.dart';
-import '../../core/database/local_cache.dart';
+import 'package:ruralcare/data/models/emergency_event_dto.dart';
+import 'package:ruralcare/core/database/local_cache.dart';
 
 class EmergencyRepository extends ChangeNotifier {
   static final EmergencyRepository _instance = EmergencyRepository._internal();

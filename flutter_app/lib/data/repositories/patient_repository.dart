@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import '../models/patient_dto.dart';
-import '../models/vitals_dto.dart';
-import '../../core/database/local_cache.dart';
+import 'package:ruralcare/data/models/patient_dto.dart';
+import 'package:ruralcare/data/models/vitals_dto.dart';
+import 'package:ruralcare/core/database/local_cache.dart';
 
 class PatientRepository extends ChangeNotifier {
   static final PatientRepository _instance = PatientRepository._internal();

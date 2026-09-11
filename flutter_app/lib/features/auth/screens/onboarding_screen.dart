@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../app/routes.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:ruralcare/app/routes.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  final VoidCallback onComplete;
+  final VoidCallback? onComplete;
 
-  const OnboardingScreen({super.key, required this.onComplete});
+  const OnboardingScreen({super.key, this.onComplete});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();

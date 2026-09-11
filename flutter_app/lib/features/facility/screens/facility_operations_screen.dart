@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/theme/demo_role_switcher.dart';
-import '../../data/repositories/facility_repository.dart';
-import '../../data/repositories/referral_repository.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/core/theme/demo_role_switcher.dart';
+import 'package:ruralcare/data/repositories/facility_repository.dart';
+import 'package:ruralcare/data/repositories/referral_repository.dart';
 
 class FacilityOperationsScreen extends StatefulWidget {
   const FacilityOperationsScreen({super.key});

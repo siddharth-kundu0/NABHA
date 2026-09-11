@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_theme.dart';
-import '../core/theme/offline_status_bar.dart';
-import '../core/theme/demo_role_switcher.dart';
-import 'routes.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/core/theme/offline_status_bar.dart';
+import 'package:ruralcare/core/theme/demo_role_switcher.dart';
+import 'package:ruralcare/app/routes.dart';
 
-import '../features/auth/screens/onboarding_screen.dart';
-import '../features/patient/screens/patient_nav_shell.dart';
-import '../features/health_worker/screens/health_worker_dashboard_screen.dart';
-import '../features/doctor/screens/doctor_dashboard_screen.dart';
-import '../features/facility/screens/facility_operations_screen.dart';
-import '../features/admin/screens/district_analytics_screen.dart';
+import 'package:ruralcare/features/auth/screens/onboarding_screen.dart';
+import 'package:ruralcare/features/patient/screens/patient_nav_shell.dart';
+import 'package:ruralcare/features/health_worker/screens/health_worker_dashboard_screen.dart';
+import 'package:ruralcare/features/doctor/screens/doctor_dashboard_screen.dart';
+import 'package:ruralcare/features/facility/screens/facility_operations_screen.dart';
+import 'package:ruralcare/features/admin/screens/district_analytics_screen.dart';
 
 class RuralCareAppShell extends StatelessWidget {
   const RuralCareAppShell({super.key});

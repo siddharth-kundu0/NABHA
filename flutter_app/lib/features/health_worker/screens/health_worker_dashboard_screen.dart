@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/theme/demo_role_switcher.dart';
-import '../../data/repositories/patient_repository.dart';
-import '../../data/repositories/referral_repository.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/core/theme/demo_role_switcher.dart';
+import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/data/repositories/referral_repository.dart';
 import 'vitals_collection_screen.dart';
 import 'digital_triage_screen.dart';
 import 'maternal_care_screen.dart';
-import '../../features/emergency/screens/emergency_tracking_screen.dart';
+import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
 
 class HealthWorkerDashboardScreen extends StatelessWidget {
   const HealthWorkerDashboardScreen({super.key});

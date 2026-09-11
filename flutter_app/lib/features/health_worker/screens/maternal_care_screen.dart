@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../data/repositories/patient_repository.dart';
+import 'package:ruralcare/core/theme/app_theme.dart';
+import 'package:ruralcare/data/repositories/patient_repository.dart';
 
 class MaternalCareScreen extends StatefulWidget {
   const MaternalCareScreen({super.key});
