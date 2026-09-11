@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/data/models/appointment_dto.dart';
+import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/repositories/appointment_repository.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 
@@ -266,7 +267,7 @@ class _LongitudinalRecordsScreenState extends State<LongitudinalRecordsScreen> w
     );
   }
 
-  Widget _buildVitalsTrendTab(BuildContext context, dynamic patient) {
+  Widget _buildVitalsTrendTab(BuildContext context, PatientDto patient) {
     final history = [
       {
         'timestamp': 'Today, 08:30 AM',

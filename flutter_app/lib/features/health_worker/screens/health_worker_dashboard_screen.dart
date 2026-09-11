@@ -6,6 +6,7 @@ import 'package:ruralcare/data/repositories/referral_repository.dart';
 import 'vitals_collection_screen.dart';
 import 'digital_triage_screen.dart';
 import 'maternal_care_screen.dart';
+import 'package:ruralcare/data/models/patient_dto.dart';
 
 class HealthWorkerDashboardScreen extends StatelessWidget {
   const HealthWorkerDashboardScreen({super.key});
@@ -212,7 +213,7 @@ class HealthWorkerDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTaskQueue(BuildContext context, List<dynamic> patients) {
+  Widget _buildTaskQueue(BuildContext context, List<PatientDto> patients) {
     return Column(
       children: [
         // Priority 1: 32-Week Gestational Hypertension

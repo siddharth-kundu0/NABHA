@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/data/models/appointment_dto.dart';
+import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/data/repositories/appointment_repository.dart';
 import 'package:ruralcare/data/repositories/referral_repository.dart';
@@ -151,7 +152,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _buildQueueCard(BuildContext context, AppointmentDto apt, dynamic patient) {
+  Widget _buildQueueCard(BuildContext context, AppointmentDto apt, PatientDto patient) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -230,7 +231,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _buildPrescriptionBuilderCard(BuildContext context, AppointmentRepository aptRepo, dynamic patient) {
+  Widget _buildPrescriptionBuilderCard(BuildContext context, AppointmentRepository aptRepo, PatientDto patient) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(

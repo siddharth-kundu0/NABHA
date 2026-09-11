@@ -3,6 +3,8 @@ import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/data/repositories/facility_repository.dart';
 import 'package:ruralcare/data/repositories/referral_repository.dart';
+import 'package:ruralcare/data/models/facility_dto.dart';
+import 'package:ruralcare/data/models/referral_dto.dart';
 
 class FacilityOperationsScreen extends StatefulWidget {
   const FacilityOperationsScreen({super.key});
@@ -84,7 +86,7 @@ class _FacilityOperationsScreenState extends State<FacilityOperationsScreen> {
     );
   }
 
-  Widget _buildBedGaugeCard(BuildContext context, dynamic facility) {
+  Widget _buildBedGaugeCard(BuildContext context, FacilityDto facility) {
     final occupancyPct = ((facility.totalBeds - _availableBeds) / facility.totalBeds * 100).toInt();
 
     return Card(
@@ -155,7 +157,7 @@ class _FacilityOperationsScreenState extends State<FacilityOperationsScreen> {
     );
   }
 
-  Widget _buildQrIntakeCard(BuildContext context, ReferralRepository refRepo, List<dynamic> referrals) {
+  Widget _buildQrIntakeCard(BuildContext context, ReferralRepository refRepo, List<ReferralDto> referrals) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -229,7 +231,7 @@ class _FacilityOperationsScreenState extends State<FacilityOperationsScreen> {
     );
   }
 
-  Widget _buildBloodBankCard(BuildContext context, dynamic facility) {
+  Widget _buildBloodBankCard(BuildContext context, FacilityDto facility) {
     final Map<String, int> blood = facility.availableBloodUnits;
 
     return Card(
@@ -257,7 +259,7 @@ class _FacilityOperationsScreenState extends State<FacilityOperationsScreen> {
     );
   }
 
-  Widget _buildPharmacyControlCard(BuildContext context, dynamic facility) {
+  Widget _buildPharmacyControlCard(BuildContext context, FacilityDto facility) {
     final meds = [
       {'name': 'Tab. Labetalol 100mg', 'stock': '140 Strips', 'isCritical': true},
       {'name': 'Inj. Oxytocin 10 IU', 'stock': '45 Ampoules', 'isCritical': true},

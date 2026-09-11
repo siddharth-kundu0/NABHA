@@ -4,6 +4,7 @@ import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/app/routes.dart';
+import 'package:ruralcare/data/models/patient_dto.dart';
 
 class PatientProfileScreen extends StatelessWidget {
   const PatientProfileScreen({super.key});
@@ -111,7 +112,7 @@ class PatientProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAbhaDigitalCard(BuildContext context, dynamic patient) {
+  Widget _buildAbhaDigitalCard(BuildContext context, PatientDto patient) {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
