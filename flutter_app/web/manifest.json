@@ -1,0 +1,18 @@
+{
+    "name": "RuralCare (NABHA)",
+    "short_name": "RuralCare",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0A6B56",
+    "theme_color": "#0A6B56",
+    "description": "RuralCare — Integrated Rural Healthcare Access, Continuity & Coordination Platform",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "favicon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+}
