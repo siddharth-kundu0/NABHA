@@ -48,6 +48,40 @@ class VitalsDto {
 
   bool get hasWarning => isHighRisk || isEmergency;
 
+  VitalsDto copyWith({
+    String? id,
+    String? patientId,
+    String? recordedById,
+    String? recordedByRole,
+    DateTime? recordedAt,
+    int? systolicBp,
+    int? diastolicBp,
+    int? pulse,
+    int? spO2,
+    double? temperature,
+    int? bloodSugar,
+    double? haemoglobin,
+    bool? isFromBleDevice,
+    String? syncStatus,
+  }) {
+    return VitalsDto(
+      id: id ?? this.id,
+      patientId: patientId ?? this.patientId,
+      recordedById: recordedById ?? this.recordedById,
+      recordedByRole: recordedByRole ?? this.recordedByRole,
+      recordedAt: recordedAt ?? this.recordedAt,
+      systolicBp: systolicBp ?? this.systolicBp,
+      diastolicBp: diastolicBp ?? this.diastolicBp,
+      pulse: pulse ?? this.pulse,
+      spO2: spO2 ?? this.spO2,
+      temperature: temperature ?? this.temperature,
+      bloodSugar: bloodSugar ?? this.bloodSugar,
+      haemoglobin: haemoglobin ?? this.haemoglobin,
+      isFromBleDevice: isFromBleDevice ?? this.isFromBleDevice,
+      syncStatus: syncStatus ?? this.syncStatus,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'patientId': patientId,

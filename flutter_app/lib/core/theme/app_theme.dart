@@ -111,6 +111,17 @@ class AppColors {
   static const Color neutral800 = Color(0xFF1F2937);
   static const Color neutral900 = Color(0xFF172B4D);
 
+  // Stitch Design System Tokens
+  static const Color darkSlate = Color(0xFF1E293B);
+  static const Color slateGray = Color(0xFF64748B);
+  static const Color navyBlue = Color(0xFF104A7B);
+  static const Color skyBlue = Color(0xFF0284C7);
+  static const Color skyBlueSoft = Color(0xFFE0F2FE);
+  static const Color earthOchre = Color(0xFFD97706);
+  static const Color earthOchreDark = Color(0xFF92400E);
+  static const Color cardBackground = Color(0xFFF8FAFC);
+  static const Color background = Color(0xFFF8FAFC);
+
   // Calm solid tint for priority areas per DESIGN.md (no loud gradients)
   static const LinearGradient priorityGradient = LinearGradient(
     colors: [Color(0xFF1B4399), Color(0xFF2457C5)],

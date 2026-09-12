@@ -203,4 +203,84 @@ class PatientRepository extends ChangeNotifier {
   }) async {
     await updatePatientProfile(patientId: patientId, emergencyContact: contact);
   }
+
+  void addPatient(PatientDto patient) {
+    _patients.insert(0, patient);
+    if (_cache.isOffline) {
+      _cache.queueMutation('PATIENT', 'CREATE', patient.toJson());
+    } else {
+      try {
+        FirebaseFirestore.instance
+            .collection('patients')
+            .doc(patient.id)
+            .set(patient.toJson());
+      } catch (e) {
+        debugPrint('Firestore patient create notice: $e');
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<void> recordFollowUpVisit({
+    required String patientId,
+    required int systolic,
+    required int diastolic,
+    required String notes,
+    required String status,
+    required String visitMode,
+    List<String> adherenceChecklist = const [],
+  }) async {
+    final idx = _patients.indexWhere((p) => p.id == patientId);
+    if (idx != -1) {
+      final old = _patients[idx];
+      final newVitals = (old.latestVitals ?? VitalsDto(
+        id: 'vit-${DateTime.now().millisecondsSinceEpoch}',
+        patientId: patientId,
+        recordedById: 'asha-904',
+        recordedByRole: 'HEALTH_WORKER',
+        recordedAt: DateTime.now(),
+        systolicBp: systolic,
+        diastolicBp: diastolic,
+        pulse: 76,
+        spO2: 98,
+        temperature: 98.6,
+        bloodSugar: 100,
+        haemoglobin: 12.0,
+      )).copyWith(
+        systolicBp: systolic,
+        diastolicBp: diastolic,
+        recordedAt: DateTime.now(),
+      );
+
+      _patients[idx] = old.copyWith(latestVitals: newVitals);
+
+      final visitPayload = {
+        'patientId': patientId,
+        'systolic': systolic,
+        'diastolic': diastolic,
+        'notes': notes,
+        'status': status,
+        'visitMode': visitMode,
+        'adherenceChecklist': adherenceChecklist,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      if (_cache.isOffline) {
+        _cache.queueMutation('FOLLOW_UP_VISIT', 'CREATE', visitPayload);
+      } else {
+        try {
+          await FirebaseFirestore.instance
+              .collection('follow_up_visits')
+              .add(visitPayload);
+          await FirebaseFirestore.instance
+              .collection('patients')
+              .doc(patientId)
+              .set({'latestVitals': newVitals.toJson()}, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('Firestore follow up visit record notice: $e');
+        }
+      }
+      notifyListeners();
+    }
+  }
 }

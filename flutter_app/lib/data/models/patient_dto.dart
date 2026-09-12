@@ -80,6 +80,52 @@ class PatientDto {
 
   String get mobileNumber => phoneNumber;
 
+  PatientDto copyWith({
+    String? id,
+    String? ruralCareId,
+    String? abhaId,
+    String? fullName,
+    int? age,
+    String? gender,
+    String? phoneNumber,
+    String? village,
+    String? subCentre,
+    String? district,
+    String? assignedAsha,
+    bool? isPregnant,
+    int? gestationalAgeWeeks,
+    int? ancVisitsCompleted,
+    DateTime? edd,
+    List<String>? highRiskConditions,
+    List<String>? chronicConditions,
+    List<String>? allergies,
+    EmergencyContactDto? emergencyContact,
+    VitalsDto? latestVitals,
+  }) {
+    return PatientDto(
+      id: id ?? this.id,
+      ruralCareId: ruralCareId ?? this.ruralCareId,
+      abhaId: abhaId ?? this.abhaId,
+      fullName: fullName ?? this.fullName,
+      age: age ?? this.age,
+      gender: gender ?? this.gender,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      village: village ?? this.village,
+      subCentre: subCentre ?? this.subCentre,
+      district: district ?? this.district,
+      assignedAsha: assignedAsha ?? this.assignedAsha,
+      isPregnant: isPregnant ?? this.isPregnant,
+      gestationalAgeWeeks: gestationalAgeWeeks ?? this.gestationalAgeWeeks,
+      ancVisitsCompleted: ancVisitsCompleted ?? this.ancVisitsCompleted,
+      edd: edd ?? this.edd,
+      highRiskConditions: highRiskConditions ?? this.highRiskConditions,
+      chronicConditions: chronicConditions ?? this.chronicConditions,
+      allergies: allergies ?? this.allergies,
+      emergencyContact: emergencyContact ?? this.emergencyContact,
+      latestVitals: latestVitals ?? this.latestVitals,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'ruralCareId': ruralCareId,

@@ -14,6 +14,8 @@ class ReferralDto {
   final bool isOverdue;
   final String? counterReferralInstructions;
   final String recommendationRationale;
+  final List<String> coordinationNotes;
+  final List<bool> checklistDone;
 
   const ReferralDto({
     required this.id,
@@ -31,6 +33,10 @@ class ReferralDto {
     this.isOverdue = false,
     this.counterReferralInstructions,
     required this.recommendationRationale,
+    this.coordinationNotes = const [
+      'Sunita Dmri (ASHA Rampur): Patient informed about Friday morning OPD timings (9 AM - 1 PM) at Bilaspur District Hospital. Advised to arrive fasting for baseline metabolic profile.',
+    ],
+    this.checklistDone = const [true, true, false],
   });
 
   String get statusLabel {
@@ -87,6 +93,8 @@ class ReferralDto {
     String? status,
     bool? isOverdue,
     String? counterReferralInstructions,
+    List<String>? coordinationNotes,
+    List<bool>? checklistDone,
   }) {
     return ReferralDto(
       id: id,
@@ -104,6 +112,8 @@ class ReferralDto {
       isOverdue: isOverdue ?? this.isOverdue,
       counterReferralInstructions: counterReferralInstructions ?? this.counterReferralInstructions,
       recommendationRationale: recommendationRationale,
+      coordinationNotes: coordinationNotes ?? this.coordinationNotes,
+      checklistDone: checklistDone ?? this.checklistDone,
     );
   }
 
@@ -123,6 +133,8 @@ class ReferralDto {
         'isOverdue': isOverdue,
         'counterReferralInstructions': counterReferralInstructions,
         'recommendationRationale': recommendationRationale,
+        'coordinationNotes': coordinationNotes,
+        'checklistDone': checklistDone,
       };
 
   factory ReferralDto.fromJson(Map<String, dynamic> json) => ReferralDto(
@@ -141,5 +153,11 @@ class ReferralDto {
         isOverdue: json['isOverdue'] as bool? ?? false,
         counterReferralInstructions: json['counterReferralInstructions'] as String?,
         recommendationRationale: json['recommendationRationale'] as String? ?? '',
+        coordinationNotes: (json['coordinationNotes'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+            const [
+              'Sunita Dmri (ASHA Rampur): Patient informed about Friday morning OPD timings (9 AM - 1 PM) at Bilaspur District Hospital. Advised to arrive fasting for baseline metabolic profile.',
+            ],
+        checklistDone: (json['checklistDone'] as List<dynamic>?)?.map((e) => e as bool).toList() ??
+            const [true, true, false],
       );
 }

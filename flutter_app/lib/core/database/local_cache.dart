@@ -13,6 +13,7 @@ class LocalCacheService extends ChangeNotifier {
   bool get isOffline => _isOffline;
   int get pendingSyncCount => _outboxQueue.length;
   int get pendingCount => _outboxQueue.length;
+  int get pendingOutboxCount => _outboxQueue.length;
   List<Map<String, dynamic>> get queuedMutations => List.unmodifiable(_outboxQueue);
 
   void toggleOfflineMode() {

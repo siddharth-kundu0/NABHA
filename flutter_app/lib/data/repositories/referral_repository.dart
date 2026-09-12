@@ -147,4 +147,49 @@ class ReferralRepository extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void addCoordinationNote(String referralId, String note) {
+    final idx = _referrals.indexWhere((r) => r.id == referralId);
+    if (idx != -1) {
+      final current = _referrals[idx];
+      final updatedNotes = List<String>.from(current.coordinationNotes)..add(note);
+      _referrals[idx] = current.copyWith(coordinationNotes: updatedNotes);
+      if (_cache.isOffline) {
+        _cache.queueMutation('REFERRAL', 'ADD_NOTE', {'id': referralId, 'note': note});
+      } else {
+        try {
+          FirebaseFirestore.instance.collection('referrals').doc(referralId).set({
+            'coordinationNotes': updatedNotes,
+          }, SetOptions(merge: true));
+        } catch (_) {}
+      }
+      notifyListeners();
+    }
+  }
+
+  void toggleChecklistItem(String referralId, int itemIndex, bool checked) {
+    final idx = _referrals.indexWhere((r) => r.id == referralId);
+    if (idx != -1) {
+      final current = _referrals[idx];
+      final updatedChecklist = List<bool>.from(current.checklistDone);
+      if (itemIndex >= 0 && itemIndex < updatedChecklist.length) {
+        updatedChecklist[itemIndex] = checked;
+        _referrals[idx] = current.copyWith(checklistDone: updatedChecklist);
+        if (_cache.isOffline) {
+          _cache.queueMutation('REFERRAL', 'CHECKLIST_UPDATE', {
+            'id': referralId,
+            'itemIndex': itemIndex,
+            'checked': checked,
+          });
+        } else {
+          try {
+            FirebaseFirestore.instance.collection('referrals').doc(referralId).set({
+              'checklistDone': updatedChecklist,
+            }, SetOptions(merge: true));
+          } catch (_) {}
+        }
+        notifyListeners();
+      }
+    }
+  }
 }
