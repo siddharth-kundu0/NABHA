@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
 
@@ -25,16 +24,16 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
         final activeLang = session.activeLanguage;
 
         return Scaffold(
-          backgroundColor: RuralCareColors.canvas,
+          backgroundColor: const Color(0xFFF8FAFC),
           appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(105),
+            preferredSize: const Size.fromHeight(102),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Top Global Row
                 Container(
-                  color: RuralCareColors.surface,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   child: SafeArea(
                     bottom: false,
                     child: Row(
@@ -45,20 +44,21 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                             Container(
                               width: 28,
                               height: 28,
-                              decoration: BoxDecoration(
-                                color: RuralCareColors.primarySoft,
-                                borderRadius: BorderRadius.circular(6),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF104A7B),
+                                shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.local_hospital_rounded, color: RuralCareColors.primary, size: 18),
+                              child: const Icon(Icons.add, color: Colors.white, size: 20),
                             ),
                             const SizedBox(width: 8),
                             const Text(
                               'RuralCare',
                               style: TextStyle(
-                                fontFamily: AppTypography.fontFamily,
+                                fontFamily: 'Noto Sans',
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: RuralCareColors.primary,
+                                color: Color(0xFF104A7B),
+                                letterSpacing: -0.2,
                               ),
                             ),
                           ],
@@ -67,19 +67,45 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                           children: [
                             // Language Pill
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
                               decoration: BoxDecoration(
-                                color: RuralCareColors.surfaceSubtle,
+                                color: const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: RuralCareColors.border),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
                               ),
-                              child: Text(
-                                activeLang == 'Hindi' ? 'हिन्दी' : (activeLang == 'Marathi' ? 'मराठी' : 'EN'),
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: RuralCareColors.textPrimary),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'EN',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: activeLang == 'English' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
+                                  Text(
+                                    'हि',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: activeLang == 'Hindi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
+                                  Text(
+                                    'म',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: activeLang == 'Marathi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            // Compact Emergency Help
+                            const SizedBox(width: 6),
+                            // Emergency Button
                             InkWell(
                               onTap: () {
                                 Navigator.of(context).push(
@@ -87,19 +113,19 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                                 );
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: RuralCareColors.critical,
+                                  color: const Color(0xFFDC2626),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.emergency_rounded, color: Colors.white, size: 13),
+                                    Icon(Icons.emergency_rounded, color: Colors.white, size: 12),
                                     SizedBox(width: 4),
                                     Text(
-                                      'Emergency',
-                                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                      'Emergency Help',
+                                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                                     ),
                                   ],
                                 ),
@@ -111,71 +137,94 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                     ),
                   ),
                 ),
-                const Divider(color: RuralCareColors.border, height: 1),
-                // Sub-header title row with Back Button
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                // Sub-header with Back button & Centered Title
                 Container(
-                  color: RuralCareColors.surface,
-                  height: 48,
+                  color: Colors.white,
+                  height: 46,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: RuralCareColors.textPrimary, size: 20),
-                        tooltip: 'Back',
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      const SizedBox(width: 4),
-                      const Expanded(
-                        child: Text(
-                          'Language & Accessibility',
-                          style: AppTypography.cardTitle,
-                          overflow: TextOverflow.ellipsis,
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(6),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: Row(
+                            children: [
+                              Icon(Icons.arrow_back, size: 18, color: Color(0xFF475569)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Back',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const Icon(Icons.tune_rounded, color: RuralCareColors.textSecondary, size: 20),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'Language & Accessibility',
+                            style: TextStyle(
+                              fontFamily: 'Noto Sans',
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.tune_rounded, color: Color(0xFF64748B), size: 18),
                       const SizedBox(width: 8),
                     ],
                   ),
                 ),
-                const Divider(color: RuralCareColors.border, height: 1),
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
               ],
             ),
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Language Selector Section
+                // 1. Language Selector Section Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.language_rounded, color: RuralCareColors.teal, size: 20),
+                        Icon(Icons.language_rounded, color: Color(0xFF0A6B56), size: 20),
                         SizedBox(width: 8),
-                        Text('Choose Language / भाषा चुनें', style: AppTypography.cardTitle),
+                        Text(
+                          'Choose Language / भाषा चुनें',
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                        ),
                       ],
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: AppDecorations.statusBadge(background: RuralCareColors.tealSoft),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF86EFAC)),
+                      ),
                       child: Text(
                         'Active: $activeLang',
                         style: const TextStyle(
-                          fontFamily: AppTypography.fontFamily,
                           fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: RuralCareColors.teal,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0A6B56),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 const Text(
                   'Select your preferred language for clinic visits and records',
-                  style: AppTypography.supporting,
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                 ),
                 const SizedBox(height: 12),
 
@@ -207,7 +256,7 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                   onTap: () => session.switchLanguage('Marathi'),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 22),
 
                 // 2. Display & Reading Preferences Section
                 const Row(
@@ -215,39 +264,49 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.visibility_outlined, color: RuralCareColors.teal, size: 20),
+                        Icon(Icons.visibility_outlined, color: Color(0xFF0A6B56), size: 20),
                         SizedBox(width: 8),
-                        Text('Display & Reading Preferences', style: AppTypography.cardTitle),
+                        Text(
+                          'Display & Reading Preferences',
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                        ),
                       ],
                     ),
-                    Text('सुगमता', style: AppTypography.supporting),
+                    Text(
+                      'सुगमता',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Container(
-                  decoration: AppDecorations.card(),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
                   child: Column(
                     children: [
                       _buildToggleRow(
                         iconWidget: const Text('Aa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         title: 'Larger Text (बड़ा टेक्स्ट)',
-                        subtitle: 'Make text easier to read throughout clinic records.',
+                        subtitle: 'Make text easier to read.',
                         value: session.largerText,
                         onChanged: (v) => session.toggleLargerText(v),
                       ),
-                      const Divider(color: RuralCareColors.border, height: 1),
+                      const Divider(color: Color(0xFFE2E8F0), height: 1),
                       _buildToggleRow(
-                        iconWidget: const Icon(Icons.wb_sunny_outlined, size: 20, color: RuralCareColors.textPrimary),
+                        iconWidget: const Icon(Icons.wb_sunny_outlined, size: 20, color: Color(0xFF475569)),
                         title: 'High Contrast (उच्च कंट्रास्ट)',
-                        subtitle: 'Improve contrast for bright sunlight in outdoor fields.',
+                        subtitle: 'Improve contrast for bright sunlight.',
                         value: session.highContrast,
                         onChanged: (v) => session.toggleHighContrast(v),
                       ),
-                      const Divider(color: RuralCareColors.border, height: 1),
+                      const Divider(color: Color(0xFFE2E8F0), height: 1),
                       _buildToggleRow(
-                        iconWidget: const Icon(Icons.motion_photos_off_outlined, size: 20, color: RuralCareColors.textPrimary),
+                        iconWidget: const Icon(Icons.motion_photos_off_outlined, size: 20, color: Color(0xFF475569)),
                         title: 'Reduce Motion (गति कम करें)',
-                        subtitle: 'Minimize transitions and animations on slower screens.',
+                        subtitle: 'Minimize transitions and motion.',
                         value: session.reduceMotion,
                         onChanged: (v) => session.toggleReduceMotion(v),
                       ),
@@ -255,23 +314,33 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // 3. Live Typography Sample
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('LIVE TYPOGRAPHY SAMPLE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: RuralCareColors.textSecondary)),
-                    Text('Real-time preview', style: AppTypography.supporting),
+                    Text(
+                      'LIVE TYPOGRAPHY SAMPLE',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    Text(
+                      'Real-time preview',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
+                    color: const Color(0xFF0D1B2A),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF1E293B)),
                   ),
                   child: Row(
                     children: [
@@ -279,9 +348,9 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: RuralCareColors.teal.withOpacity(0.2),
+                          color: const Color(0xFF0A6B56).withOpacity(0.3),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: RuralCareColors.teal.withOpacity(0.4)),
+                          border: Border.all(color: const Color(0xFF0A6B56)),
                         ),
                         child: const Icon(Icons.format_size_rounded, color: Color(0xFF34D399), size: 22),
                       ),
@@ -291,28 +360,28 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Preview / पूर्वावलोकन',
+                              'Preview',
                               style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.w600),
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: 2),
                             Text(
                               activeLang == 'Hindi'
-                                  ? 'डॉक्टर परामर्श एवं पर्चा'
-                                  : (activeLang == 'Marathi' ? 'डॉक्टर सल्ला व औषधोपचार' : 'Clinical Consultation & Prescription'),
+                                  ? 'परामर्श और पर्चा'
+                                  : (activeLang == 'Marathi' ? 'सल्ला व औषधोपचार' : 'Sample Heading'),
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: session.largerText ? 16 : 14,
+                                fontSize: session.largerText ? 16 : 14.5,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               activeLang == 'Hindi'
-                                  ? 'पठनीयता जांच के लिए उदाहरण पाठ'
-                                  : (activeLang == 'Marathi' ? 'वाचन सुलभतेसाठी प्रात्यक्षिक मजकूर' : 'Example text for display readability and size preview.'),
+                                  ? 'पठनीयता जांच के लिए उदाहरण पाठ।'
+                                  : (activeLang == 'Marathi' ? 'वाचन सुलभतेसाठी प्रात्यक्षिक मजकूर.' : 'Example text for display readability and size preview.'),
                               style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: session.largerText ? 13 : 11,
+                                color: const Color(0xFF94A3B8),
+                                fontSize: session.largerText ? 12.5 : 11,
                               ),
                             ),
                           ],
@@ -322,14 +391,19 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                   ),
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
-                // 4. Apply Settings CTA Button (52px)
+                // 4. Apply Settings CTA Button (Solid Teal #0A6B56)
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 50,
                   child: ElevatedButton(
-                    style: AppDecorations.primaryButton(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0A6B56),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
                     onPressed: () {
                       setState(() => _showSavedToast = true);
                       Future.delayed(const Duration(seconds: 2), () {
@@ -340,41 +414,44 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Preferences saved and updated for all clinic records!'),
-                          backgroundColor: RuralCareColors.teal,
+                          backgroundColor: Color(0xFF0A6B56),
                         ),
                       );
                     },
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check_circle_outline_rounded, size: 20),
-                        SizedBox(width: 8),
-                        Text('Apply Settings / प्राथमिकताएं सहेजें'),
+                        Icon(Icons.check_circle_outline, size: 18),
+                        SizedBox(width: 6),
+                        Text(
+                          'Apply Settings / प्राथमिकताएं सहेजें',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
                       ],
                     ),
                   ),
                 ),
 
                 if (_showSavedToast) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                     decoration: BoxDecoration(
-                      color: RuralCareColors.successSoft,
+                      color: const Color(0xFFDCFCE7),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: RuralCareColors.success.withOpacity(0.3)),
+                      border: Border.all(color: const Color(0xFF86EFAC)),
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.check_circle_rounded, color: RuralCareColors.success, size: 18),
+                        Icon(Icons.check_circle, color: Color(0xFF15803D), size: 16),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Preferences saved and updated for all clinic records!',
                             style: TextStyle(
-                              color: RuralCareColors.success,
-                              fontSize: 12,
+                              color: Color(0xFF15803D),
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -384,7 +461,7 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                   ),
                 ],
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -406,79 +483,91 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        constraints: const BoxConstraints(minHeight: 64),
-        padding: const EdgeInsets.all(14),
+        constraints: const BoxConstraints(minHeight: 62),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? RuralCareColors.primarySoft.withOpacity(0.4) : RuralCareColors.surface,
+          color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? RuralCareColors.teal : RuralCareColors.border,
+            color: isSelected ? const Color(0xFF0A6B56) : const Color(0xFFE2E8F0),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: isSelected ? RuralCareColors.teal : RuralCareColors.surfaceSubtle,
-                borderRadius: BorderRadius.circular(10),
+                color: isSelected ? const Color(0xFF0A6B56) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
                 child: Text(
                   code,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : RuralCareColors.textPrimary,
-                    fontSize: 14,
+                    color: isSelected ? Colors.white : const Color(0xFF334155),
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Text(title, style: AppTypography.cardTitle),
+                      Text(
+                        title,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                      ),
                       if (secondaryTitle != null) ...[
                         const SizedBox(width: 4),
-                        Text(secondaryTitle, style: AppTypography.supporting),
+                        Text(
+                          secondaryTitle,
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
                       ],
                       if (tag != null) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: AppDecorations.statusBadge(background: RuralCareColors.tealSoft),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                           child: Text(
                             tag,
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: RuralCareColors.teal),
+                            style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF0A6B56)),
                           ),
                         ),
                       ],
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: AppTypography.supporting),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                  ),
                 ],
               ),
             ),
             Container(
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? RuralCareColors.teal : Colors.transparent,
+                color: isSelected ? const Color(0xFF0A6B56) : Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? RuralCareColors.teal : RuralCareColors.border,
+                  color: isSelected ? const Color(0xFF0A6B56) : const Color(0xFFCBD5E1),
                   width: 2,
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
+                  ? const Icon(Icons.check, color: Colors.white, size: 14)
                   : null,
             ),
           ],
@@ -495,14 +584,14 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
     required ValueChanged<bool> onChanged,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Row(
         children: [
           Container(
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: RuralCareColors.surfaceSubtle,
+              color: const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(child: iconWidget),
@@ -512,15 +601,21 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text(subtitle, style: AppTypography.supporting),
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                ),
               ],
             ),
           ),
           Switch.adaptive(
             value: value,
-            activeColor: RuralCareColors.teal,
+            activeColor: const Color(0xFF0A6B56),
             onChanged: onChanged,
           ),
         ],

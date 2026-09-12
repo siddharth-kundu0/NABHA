@@ -37,7 +37,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
             top: 20,
           ),
           decoration: const BoxDecoration(
-            color: RuralCareColors.surface,
+            color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: SingleChildScrollView(
@@ -48,41 +48,48 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Emergency Contact Details', style: AppTypography.cardTitle),
+                    const Text(
+                      'Emergency Contact Details',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                    ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, color: RuralCareColors.textSecondary),
+                      icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
                       onPressed: () => Navigator.of(ctx).pop(),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Contact Full Name', style: AppTypography.supporting),
+                const Text('Contact Full Name', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 const SizedBox(height: 6),
                 TextField(
                   controller: nameCtrl,
-                  decoration: AppDecorations.input(hintText: 'e.g. Rajesh Devi'),
+                  decoration: AppDecorations.input(hintText: 'e.g. Rajesh Devi / Sunita Sharma'),
                 ),
                 const SizedBox(height: 14),
-                const Text('Relationship', style: AppTypography.supporting),
+                const Text('Relationship', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 const SizedBox(height: 6),
                 TextField(
                   controller: relCtrl,
-                  decoration: AppDecorations.input(hintText: 'e.g. Spouse / Husband / Parent'),
+                  decoration: AppDecorations.input(hintText: 'e.g. Wife / Spouse / Husband / Parent'),
                 ),
                 const SizedBox(height: 14),
-                const Text('Phone Number', style: AppTypography.supporting),
+                const Text('Phone Number', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 const SizedBox(height: 6),
                 TextField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
-                  decoration: AppDecorations.input(hintText: '+91 98234 11205'),
+                  decoration: AppDecorations.input(hintText: '+91 98765 11223'),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 50,
                   child: ElevatedButton(
-                    style: AppDecorations.primaryButton(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0A6B56),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                     onPressed: () {
                       final n = nameCtrl.text.trim();
                       final r = relCtrl.text.trim();
@@ -97,11 +104,11 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Emergency contact saved and verified'),
-                          backgroundColor: RuralCareColors.teal,
+                          backgroundColor: Color(0xFF0A6B56),
                         ),
                       );
                     },
-                    child: const Text('Save Contact'),
+                    child: const Text('Save Contact', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -127,16 +134,16 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
         );
 
         return Scaffold(
-          backgroundColor: RuralCareColors.canvas,
+          backgroundColor: const Color(0xFFF8FAFC),
           appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(105),
+            preferredSize: const Size.fromHeight(102),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Top Global Row
                 Container(
-                  color: RuralCareColors.surface,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   child: SafeArea(
                     bottom: false,
                     child: Row(
@@ -147,20 +154,21 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                             Container(
                               width: 28,
                               height: 28,
-                              decoration: BoxDecoration(
-                                color: RuralCareColors.primarySoft,
-                                borderRadius: BorderRadius.circular(6),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF104A7B),
+                                shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.local_hospital_rounded, color: RuralCareColors.primary, size: 18),
+                              child: const Icon(Icons.add, color: Colors.white, size: 20),
                             ),
                             const SizedBox(width: 8),
                             const Text(
                               'RuralCare',
                               style: TextStyle(
-                                fontFamily: AppTypography.fontFamily,
+                                fontFamily: 'Noto Sans',
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: RuralCareColors.primary,
+                                color: Color(0xFF104A7B),
+                                letterSpacing: -0.2,
                               ),
                             ),
                           ],
@@ -169,21 +177,45 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                           children: [
                             // Language Pill
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
                               decoration: BoxDecoration(
-                                color: RuralCareColors.surfaceSubtle,
+                                color: const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: RuralCareColors.border),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
                               ),
-                              child: Text(
-                                session.activeLanguage == 'Hindi'
-                                    ? 'हिन्दी'
-                                    : (session.activeLanguage == 'Marathi' ? 'मराठी' : 'EN'),
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: RuralCareColors.textPrimary),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'EN',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: session.activeLanguage == 'English' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
+                                  Text(
+                                    'हि',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: session.activeLanguage == 'Hindi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
+                                  Text(
+                                    'म',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: session.activeLanguage == 'Marathi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            // Compact Emergency Help
+                            const SizedBox(width: 6),
+                            // Emergency Button
                             InkWell(
                               onTap: () {
                                 Navigator.of(context).push(
@@ -191,19 +223,19 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                 );
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: RuralCareColors.critical,
+                                  color: const Color(0xFFDC2626),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.emergency_rounded, color: Colors.white, size: 13),
+                                    Icon(Icons.emergency_rounded, color: Colors.white, size: 12),
                                     SizedBox(width: 4),
                                     Text(
-                                      'Emergency',
-                                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                      'Emergency Help',
+                                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                                     ),
                                   ],
                                 ),
@@ -215,61 +247,85 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     ),
                   ),
                 ),
-                const Divider(color: RuralCareColors.border, height: 1),
-                // Sub-header title row with Back Button
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                // Sub-header with Back button & Centered Title
                 Container(
-                  color: RuralCareColors.surface,
-                  height: 48,
+                  color: Colors.white,
+                  height: 46,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: RuralCareColors.textPrimary, size: 20),
-                        tooltip: 'Back',
-                        onPressed: () => Navigator.of(context).pop(),
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(6),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: Row(
+                            children: [
+                              Icon(Icons.arrow_back, size: 18, color: Color(0xFF475569)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Back',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
                       const Expanded(
-                        child: Text('Privacy & Security', style: AppTypography.cardTitle),
+                        child: Center(
+                          child: Text(
+                            'Privacy & Security',
+                            style: TextStyle(
+                              fontFamily: 'Noto Sans',
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
                       ),
-                      const Icon(Icons.shield_outlined, color: RuralCareColors.primary, size: 20),
+                      const Icon(Icons.shield_outlined, color: Color(0xFF0A6B56), size: 19),
                       const SizedBox(width: 8),
                     ],
                   ),
                 ),
-                const Divider(color: RuralCareColors.border, height: 1),
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
               ],
             ),
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // SECTION 1: EMERGENCY CONTACTS
+                // SECTION 1: EMERGENCY CONTACT
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.emergency_rounded, color: RuralCareColors.critical, size: 18),
+                        Icon(Icons.emergency_rounded, color: Color(0xFFEF4444), size: 18),
                         SizedBox(width: 6),
-                        Text('Emergency Contact', style: AppTypography.cardTitle),
+                        Text(
+                          'Emergency Contact',
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                        ),
                       ],
                     ),
                     InkWell(
                       onTap: () => _openEditContactDialog(context, patientRepo, currentPatient),
                       child: const Row(
                         children: [
-                          Icon(Icons.add_circle_outline_rounded, size: 15, color: RuralCareColors.primary),
+                          Icon(Icons.add_circle_outline_rounded, size: 15, color: Color(0xFF0A6B56)),
                           SizedBox(width: 4),
                           Text(
-                            '+ Add / Update',
+                            '+ Add Contact',
                             style: TextStyle(
-                              fontFamily: AppTypography.fontFamily,
+                              fontFamily: 'Noto Sans',
                               fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: RuralCareColors.primary,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0A6B56),
                             ),
                           ),
                         ],
@@ -279,8 +335,12 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 ),
                 const SizedBox(height: 10),
                 Container(
-                  decoration: AppDecorations.card(),
-                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     children: [
                       Row(
@@ -290,12 +350,12 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              color: RuralCareColors.criticalSoft,
-                              borderRadius: BorderRadius.circular(10),
+                              color: const Color(0xFFFEE2E2),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.perm_phone_msg_rounded, color: RuralCareColors.critical, size: 22),
+                            child: const Icon(Icons.perm_phone_msg_rounded, color: Color(0xFFEF4444), size: 22),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,26 +365,26 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                     Text(
                                       currentPatient.emergencyContact.name.isNotEmpty
                                           ? currentPatient.emergencyContact.name
-                                          : 'Rajesh Devi',
-                                      style: AppTypography.cardTitle,
+                                          : 'Sunita Sharma',
+                                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                                     ),
-                                    const SizedBox(width: 6),
+                                    const SizedBox(width: 5),
                                     Text(
-                                      '(${currentPatient.emergencyContact.relationship.isNotEmpty ? currentPatient.emergencyContact.relationship : "Spouse"})',
-                                      style: AppTypography.supporting,
+                                      '(${currentPatient.emergencyContact.relationship.isNotEmpty ? currentPatient.emergencyContact.relationship : "Wife / पत्नी"})',
+                                      style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.call_outlined, size: 14, color: RuralCareColors.textSecondary),
+                                    const Icon(Icons.call_outlined, size: 13, color: Color(0xFF94A3B8)),
                                     const SizedBox(width: 4),
                                     Text(
                                       currentPatient.emergencyContact.phoneNumber.isNotEmpty
                                           ? currentPatient.emergencyContact.phoneNumber
-                                          : '+91 98234 11205',
-                                      style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+                                          : '+91 98765 11223',
+                                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
                                     ),
                                   ],
                                 ),
@@ -333,17 +393,20 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: AppDecorations.statusBadge(background: RuralCareColors.successSoft),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             child: const Row(
                               children: [
-                                Icon(Icons.circle, size: 6, color: RuralCareColors.success),
+                                Icon(Icons.circle, size: 6, color: Color(0xFF15803D)),
                                 SizedBox(width: 4),
                                 Text(
                                   'Active / सक्रिय',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: RuralCareColors.success,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF15803D),
                                   ),
                                 ),
                               ],
@@ -351,28 +414,31 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                           ),
                         ],
                       ),
-                      const Divider(color: RuralCareColors.border, height: 24),
+                      const SizedBox(height: 10),
+                      const Divider(color: Color(0xFFF1F5F9), height: 1),
+                      const SizedBox(height: 6),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              foregroundColor: RuralCareColors.textSecondary,
-                              visualDensity: VisualDensity.compact,
+                          InkWell(
+                            onTap: () => _openEditContactDialog(context, patientRepo, currentPatient),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit_outlined, size: 14, color: Color(0xFF475569)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Edit',
+                                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                  ),
+                                ],
+                              ),
                             ),
-                            icon: const Icon(Icons.edit_outlined, size: 16),
-                            label: const Text('Edit'),
-                            onPressed: () => _openEditContactDialog(context, patientRepo, currentPatient),
                           ),
                           const SizedBox(width: 8),
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              foregroundColor: RuralCareColors.critical,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            icon: const Icon(Icons.delete_outline_rounded, size: 16),
-                            label: const Text('Remove'),
-                            onPressed: () {
+                          InkWell(
+                            onTap: () {
                               patientRepo.updateEmergencyContact(
                                 patientId: currentPatient.id,
                                 contact: const EmergencyContactDto(name: '', relationship: '', phoneNumber: ''),
@@ -381,6 +447,19 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                 const SnackBar(content: Text('Contact removed')),
                               );
                             },
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_outline_rounded, size: 14, color: Color(0xFFEF4444)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Remove',
+                                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFFEF4444)),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -390,34 +469,41 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 const SizedBox(height: 6),
                 const Row(
                   children: [
-                    Icon(Icons.info_outline_rounded, size: 14, color: RuralCareColors.warning),
-                    SizedBox(width: 6),
+                    Icon(Icons.info_outline, size: 13, color: Color(0xFFF59E0B)),
+                    SizedBox(width: 5),
                     Expanded(
                       child: Text(
                         'This contact is notified if you trigger an emergency alert.',
-                        style: TextStyle(fontSize: 11, color: RuralCareColors.textSecondary),
+                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 22),
 
-                // SECTION 2: PRIVACY & CARE SHARING
+                // SECTION 2: DATA SHARING & CONSENT
                 const Row(
                   children: [
-                    Icon(Icons.verified_user_outlined, color: RuralCareColors.primary, size: 18),
+                    Icon(Icons.verified_user_outlined, color: Color(0xFF0A6B56), size: 18),
                     SizedBox(width: 6),
-                    Text('Data Sharing & Consent', style: AppTypography.cardTitle),
+                    Text(
+                      'Data Sharing & Consent',
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Container(
-                  decoration: AppDecorations.card(),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
                             const Expanded(
@@ -426,28 +512,28 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                 children: [
                                   Text(
                                     'Share Records with Attending Doctors',
-                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: RuralCareColors.textPrimary),
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                                   ),
-                                  SizedBox(height: 3),
+                                  SizedBox(height: 2),
                                   Text(
-                                    'Allows doctors at PHC Kashti & Baramati SDH to review your consultation history.',
-                                    style: AppTypography.supporting,
+                                    'Allows doctors at PHC Rampur to review your consultation history.',
+                                    style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
                             Switch.adaptive(
                               value: session.shareWithDoctors,
-                              activeColor: RuralCareColors.primary,
+                              activeColor: const Color(0xFF0A6B56),
                               onChanged: (v) => session.toggleShareWithDoctors(v),
                             ),
                           ],
                         ),
                       ),
-                      const Divider(color: RuralCareColors.border, height: 1),
+                      const Divider(color: Color(0xFFE2E8F0), height: 1),
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
                             const Expanded(
@@ -456,20 +542,20 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                 children: [
                                   Text(
                                     'Offline Record Cache',
-                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: RuralCareColors.textPrimary),
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                                   ),
-                                  SizedBox(height: 3),
+                                  SizedBox(height: 2),
                                   Text(
-                                    'Keep selected health records available on this device without internet.',
-                                    style: AppTypography.supporting,
+                                    'Keep selected records available on this device.',
+                                    style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
                             Switch.adaptive(
                               value: session.offlineRecordCache,
-                              activeColor: RuralCareColors.primary,
+                              activeColor: const Color(0xFF0A6B56),
                               onChanged: (v) => session.toggleOfflineRecordCache(v),
                             ),
                           ],
@@ -482,100 +568,199 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: RuralCareColors.surfaceSubtle,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: RuralCareColors.border),
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.lock_outline_rounded, size: 15, color: RuralCareColors.textSecondary),
-                      SizedBox(width: 8),
+                      Text('🔒', style: TextStyle(fontSize: 12)),
+                      SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           'Control how your health information is shared for care.',
-                          style: TextStyle(fontSize: 11, color: RuralCareColors.textSecondary, fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 22),
 
                 // SECTION 3: ACCOUNT ACTIONS
                 const Row(
                   children: [
-                    Icon(Icons.manage_accounts_outlined, color: RuralCareColors.textSecondary, size: 18),
+                    Icon(Icons.manage_accounts_outlined, color: Color(0xFF64748B), size: 18),
                     SizedBox(width: 6),
-                    Text('Account Actions', style: AppTypography.cardTitle),
+                    Text(
+                      'Account Actions',
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Container(
-                  decoration: AppDecorations.card(),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
                   child: Column(
                     children: [
-                      ListTile(
-                        leading: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: RuralCareColors.tealSoft,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.phone_iphone_rounded, color: RuralCareColors.teal, size: 18),
-                        ),
-                        title: const Text('Update Registered Mobile', style: AppTypography.body),
-                        subtitle: Text('+91 ${currentPatient.mobileNumber}', style: AppTypography.supporting),
-                        trailing: const Icon(Icons.chevron_right_rounded, color: RuralCareColors.textSecondary),
+                      InkWell(
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Verification OTP sent to registered number')),
                           );
                         },
-                      ),
-                      const Divider(color: RuralCareColors.border, height: 1),
-                      ListTile(
-                        leading: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: RuralCareColors.surfaceSubtle,
-                            borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE6F4F1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.phone_iphone_rounded, color: Color(0xFF0A6B56), size: 18),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    'Update Registered Mobile',
+                                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                  ),
+                                ],
+                              ),
+                              const Text('→', style: TextStyle(fontSize: 16, color: Color(0xFF94A3B8))),
+                            ],
                           ),
-                          child: const Icon(Icons.delete_sweep_rounded, color: RuralCareColors.textSecondary, size: 18),
                         ),
-                        title: const Text('Clear Local Device Cache', style: AppTypography.body),
-                        subtitle: Text('${cache.pendingSyncCount} pending mutations', style: AppTypography.supporting),
-                        trailing: const Icon(Icons.chevron_right_rounded, color: RuralCareColors.textSecondary),
+                      ),
+                      const Divider(color: Color(0xFFE2E8F0), height: 1),
+                      InkWell(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Sign Out from Device?'),
+                              content: const Text('Your offline data will remain preserved.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  style: AppDecorations.primaryButton(),
+                                  onPressed: () {
+                                    Navigator.of(ctx).pop();
+                                    session.resetToOnboarding();
+                                  },
+                                  child: const Text('Sign Out'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.logout_rounded, color: Color(0xFF475569), size: 18),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    'Sign Out of Device',
+                                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                  ),
+                                ],
+                              ),
+                              const Icon(Icons.logout_rounded, size: 16, color: Color(0xFF94A3B8)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Divider(color: Color(0xFFE2E8F0), height: 1),
+                      InkWell(
                         onTap: () {
                           cache.syncOutbox();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Device cache cleared')),
+                            const SnackBar(content: Text('Local profile and cache removed from this device')),
                           );
                         },
-                      ),
-                      const Divider(color: RuralCareColors.border, height: 1),
-                      ListTile(
-                        leading: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: RuralCareColors.primarySoft,
-                            borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEE2E2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.block_flipped, color: Color(0xFFDC2626), size: 18),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Delete / Close Account',
+                                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFFDC2626)),
+                                      ),
+                                      SizedBox(height: 1),
+                                      Text(
+                                        'Removes local profile from this device.',
+                                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const Text('→', style: TextStyle(fontSize: 16, color: Color(0xFFDC2626))),
+                            ],
                           ),
-                          child: const Icon(Icons.swap_horiz_rounded, color: RuralCareColors.primary, size: 18),
                         ),
-                        title: const Text('Switch Role Persona (Testing)', style: AppTypography.body),
-                        subtitle: Text('Current: ${session.activeRole.name}', style: AppTypography.supporting),
-                        trailing: const Icon(Icons.chevron_right_rounded, color: RuralCareColors.primary),
-                        onTap: () => DemoRoleSwitcher.show(context),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 14),
+
+                // Role Switcher Tile for Testing Demo
+                Center(
+                  child: TextButton.icon(
+                    style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                    label: Text(
+                      'Testing Persona: ${session.activeRole.name}',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+                    ),
+                    onPressed: () => DemoRoleSwitcher.show(context),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
               ],
             ),
           ),
