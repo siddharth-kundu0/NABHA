@@ -16,39 +16,56 @@ class OfflineStatusBar extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
+        final isOffline = cache.isOffline;
+        final bgColor = isOffline ? RuralCareColors.warningSoft : RuralCareColors.primarySoft;
+        final fgColor = isOffline ? RuralCareColors.warning : RuralCareColors.primary;
+
         return Container(
           width: double.infinity,
-          color: cache.isOffline ? RuralCareColors.warningBg : RuralCareColors.infoBg,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: bgColor,
+            border: Border(
+              bottom: BorderSide(color: fgColor.withOpacity(0.2), width: 1.0),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
               Icon(
-                cache.isOffline ? Icons.wifi_off_rounded : Icons.sync_rounded,
+                isOffline ? Icons.wifi_off_rounded : Icons.sync_rounded,
                 size: 18,
-                color: cache.isOffline ? RuralCareColors.warning : RuralCareColors.info,
+                color: fgColor,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  cache.isOffline
-                      ? 'Offline Mode — Records saved locally (ऑफलाइन मोड - सुरक्षित सेव्ह केले)'
+                  isOffline
+                      ? 'Offline Mode — Records saved locally'
                       : 'Syncing ${cache.pendingSyncCount} records to cloud...',
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: cache.isOffline ? RuralCareColors.warning : RuralCareColors.info,
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: fgColor,
                   ),
                 ),
               ),
               GestureDetector(
                 onTap: () => cache.toggleOfflineMode(),
-                child: Text(
-                  cache.isOffline ? 'Go Online' : 'Sync Now',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
-                    color: cache.isOffline ? RuralCareColors.warning : RuralCareColors.info,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: AppDecorations.statusBadge(
+                    background: Colors.white,
+                    border: fgColor.withOpacity(0.3),
+                  ),
+                  child: Text(
+                    isOffline ? 'Go Online' : 'Sync Now',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: fgColor,
+                    ),
                   ),
                 ),
               ),

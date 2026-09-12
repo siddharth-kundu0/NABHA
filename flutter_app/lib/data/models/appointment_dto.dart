@@ -11,6 +11,8 @@ class PrescriptionItemDto {
     required this.durationDays,
   });
 
+  String get name => medicineName;
+
   Map<String, dynamic> toJson() => {
         'medicineName': medicineName,
         'dosage': dosage,
@@ -44,6 +46,8 @@ class PrescriptionDto {
     this.adviceNotes,
     required this.issuedAt,
   });
+
+  String? get lifestyleAdvice => adviceNotes;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -92,6 +96,9 @@ class AppointmentDto {
     required this.status,
     required this.chiefComplaint,
   });
+
+  String get appointmentTime =>
+      '${scheduledTime.day}/${scheduledTime.month}/${scheduledTime.year} ${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}';
 
   Map<String, dynamic> toJson() => {
         'id': id,

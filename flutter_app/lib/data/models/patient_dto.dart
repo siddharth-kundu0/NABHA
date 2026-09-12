@@ -78,6 +78,8 @@ class PatientDto {
 
   bool get isEmergency => latestVitals != null && latestVitals!.isEmergency;
 
+  String get mobileNumber => phoneNumber;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'ruralCareId': ruralCareId,

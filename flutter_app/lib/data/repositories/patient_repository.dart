@@ -139,4 +139,6 @@ class PatientRepository extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> updatePatientVitals(String patientId, VitalsDto newVitals) => updateVitals(patientId, newVitals);
 }

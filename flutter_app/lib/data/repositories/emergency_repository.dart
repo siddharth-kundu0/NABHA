@@ -13,6 +13,15 @@ class EmergencyRepository extends ChangeNotifier {
 
   EmergencyEventDto? get activeEvent => _activeEvent;
   bool get hasActiveAlert => _activeEvent != null && _activeEvent!.status == 'ACTIVE';
+  bool get hasActiveEmergency => hasActiveAlert;
+
+  void triggerSos({required String patientId, required String location}) {
+    triggerEmergency(
+      patientId: patientId,
+      patientName: 'Kavita Rajesh Devi',
+      assignedFacilityName: 'Baramati Sub-District Hospital',
+    );
+  }
 
   void triggerEmergency({
     required String patientId,

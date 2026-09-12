@@ -59,6 +59,29 @@ class ReferralDto {
   }
 
   String get statusDisplay => statusLabel;
+  String get referringFacilityName => referringFacility;
+  String get reasonSummary => reason;
+  int get currentStage {
+    switch (status) {
+      case 'CREATED':
+        return 1;
+      case 'HOSPITAL_NOTIFIED':
+        return 2;
+      case 'AMBULANCE_ASSIGNED':
+      case 'PATIENT_EN_ROUTE':
+        return 3;
+      case 'PATIENT_ARRIVED':
+        return 4;
+      case 'ADMITTED':
+      case 'TREATMENT_COMPLETED':
+        return 5;
+      case 'COUNTER_REFERRED':
+      case 'CLOSED':
+        return 6;
+      default:
+        return 1;
+    }
+  }
 
   ReferralDto copyWith({
     String? status,

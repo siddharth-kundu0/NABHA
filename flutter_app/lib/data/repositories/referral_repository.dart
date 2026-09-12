@@ -126,4 +126,25 @@ class ReferralRepository extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void dispatchCounterReferral({required String referralId, required String instructions}) =>
+      addCounterReferral(referralId, instructions);
+
+  void updateStatus(String referralId, String newStatus) {
+    final idx = _referrals.indexWhere((r) => r.id == referralId);
+    if (idx != -1) {
+      _referrals[idx] = _referrals[idx].copyWith(status: newStatus);
+      if (_cache.isOffline) {
+        _cache.queueMutation('REFERRAL', 'STATUS_UPDATE', {'id': referralId, 'status': newStatus});
+      } else {
+        try {
+          FirebaseFirestore.instance
+              .collection('referrals')
+              .doc(referralId)
+              .set({'status': newStatus}, SetOptions(merge: true));
+        } catch (_) {}
+      }
+      notifyListeners();
+    }
+  }
 }
