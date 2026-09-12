@@ -47,9 +47,22 @@ class SessionCoordinator extends ChangeNotifier {
   String _activeLanguage = 'English';
   bool _hasCompletedOnboarding = true;
 
+  // Accessibility & Privacy preferences
+  bool _largerText = false;
+  bool _highContrast = false;
+  bool _reduceMotion = false;
+  bool _shareWithDoctors = true;
+  bool _offlineRecordCache = true;
+
   AppRole get activeRole => _activeRole;
   String get activeLanguage => _activeLanguage;
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;
+
+  bool get largerText => _largerText;
+  bool get highContrast => _highContrast;
+  bool get reduceMotion => _reduceMotion;
+  bool get shareWithDoctors => _shareWithDoctors;
+  bool get offlineRecordCache => _offlineRecordCache;
 
   void switchRole(AppRole role) {
     _activeRole = role;
@@ -58,6 +71,31 @@ class SessionCoordinator extends ChangeNotifier {
 
   void switchLanguage(String lang) {
     _activeLanguage = lang;
+    notifyListeners();
+  }
+
+  void toggleLargerText(bool val) {
+    _largerText = val;
+    notifyListeners();
+  }
+
+  void toggleHighContrast(bool val) {
+    _highContrast = val;
+    notifyListeners();
+  }
+
+  void toggleReduceMotion(bool val) {
+    _reduceMotion = val;
+    notifyListeners();
+  }
+
+  void toggleShareWithDoctors(bool val) {
+    _shareWithDoctors = val;
+    notifyListeners();
+  }
+
+  void toggleOfflineRecordCache(bool val) {
+    _offlineRecordCache = val;
     notifyListeners();
   }
 

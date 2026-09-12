@@ -4,12 +4,13 @@ import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/app/routes.dart';
-import 'package:ruralcare/data/models/patient_dto.dart';
+import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
+import 'package:ruralcare/features/patient/screens/personal_details_screen.dart';
+import 'package:ruralcare/features/patient/screens/language_accessibility_screen.dart';
+import 'package:ruralcare/features/patient/screens/privacy_security_screen.dart';
 
-/// Patient Profile Screen conforming strictly to DESIGN.md Section 6:
-/// Straightforward list rows for personal details, language, healthcare area,
-/// next of kin, sharing preferences, and account actions.
-/// Displays RuralCare ID cleanly without implying a government-issued identity.
+/// Screen 1: Profile Overview (V2 Modern)
+/// Exactly reproducing Stitch Screen `ce2a8f8bb13f4dbfbf2f9c397e5ab57a`
 class PatientProfileScreen extends StatefulWidget {
   const PatientProfileScreen({super.key});
 
@@ -29,112 +30,456 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       builder: (context, _) {
         final patient = patientRepo.defaultPatient;
         final lang = session.activeLanguage;
+        final initials = _getInitials(patient.fullName);
 
         return Scaffold(
           backgroundColor: RuralCareColors.canvas,
-          appBar: AppBar(
-            title: const Text('Profile', style: AppTypography.pageTitle),
-            backgroundColor: RuralCareColors.surface,
-            elevation: 0,
-            bottom: const PreferredSize(
-              preferredSize: Size.fromHeight(1),
-              child: Divider(color: RuralCareColors.border, height: 1),
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Container(
+              color: RuralCareColors.surface,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Brand Logo
+                    Row(
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: RuralCareColors.primarySoft,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.local_hospital_rounded, color: RuralCareColors.primary, size: 20),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'RuralCare',
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamily,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: RuralCareColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Language Switcher & Emergency & Avatar Pill
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (ctx) => const LanguageAccessibilityScreen()),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: RuralCareColors.surfaceSubtle,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: RuralCareColors.border),
+                            ),
+                            child: Text(
+                              lang == 'Hindi' ? 'हिन्दी' : (lang == 'Marathi' ? 'मराठी' : 'EN'),
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: RuralCareColors.textPrimary),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (ctx) => const EmergencyTrackingScreen()),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: RuralCareColors.critical,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.emergency_rounded, color: Colors.white, size: 13),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Emergency Help',
+                                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        CircleAvatar(
+                          radius: 15,
+                          backgroundColor: const Color(0xFF104A7B),
+                          child: Text(
+                            initials,
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Clean RuralCare ID Card (no faux government seals, no gradients)
-                _buildRuralCareIdCard(patient),
+                // Screen Title Bar
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Patient Profile', style: AppTypography.pageTitle),
+                        SizedBox(height: 2),
+                        Text('Manage personal details, access & preferences', style: AppTypography.supporting),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: AppDecorations.statusBadge(background: RuralCareColors.primarySoft),
+                      child: const Text(
+                        'Patient View',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: RuralCareColors.primary),
+                      ),
+                    ),
+                  ],
+                ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-                // 2. Personal Details Group
-                const Text('Personal details', style: AppTypography.sectionTitle),
-                const SizedBox(height: 10),
-                _buildSectionContainer([
-                  _profileRow('Full name', patient.fullName),
-                  _profileRow('Age & gender', '${patient.age} yrs • ${patient.gender.toUpperCase()}'),
-                  _profileRow('Mobile number', '+91 ${patient.mobileNumber}'),
-                  _profileRow('Healthcare area', '${patient.village} • ${patient.subCentre}'),
-                ]),
-
-                const SizedBox(height: 24),
-
-                // 3. Care Network & Next of Kin Group
-                const Text('Care network', style: AppTypography.sectionTitle),
-                const SizedBox(height: 10),
-                _buildSectionContainer([
-                  _profileRow('Assigned health worker', patient.assignedAsha),
-                  _profileRow('Primary health centre', 'Kashti PHC (Baramati)'),
-                  _profileRow('Next of kin contact', 'Rajesh Devi (Spouse) • +91 98234 11205'),
-                ]),
-
-                const SizedBox(height: 24),
-
-                // 4. Preferences & Settings
-                const Text('Preferences', style: AppTypography.sectionTitle),
-                const SizedBox(height: 10),
-                _buildSectionContainer([
-                  InkWell(
-                    onTap: () => _openLanguageDialog(context, session),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // PATIENT HERO CARD
+                Container(
+                  decoration: AppDecorations.card(),
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Avatar with verified badge
+                      Stack(
+                        clipBehavior: Clip.none,
                         children: [
-                          const Text('Application language', style: AppTypography.body),
-                          Row(
-                            children: [
-                              Text(
-                                lang,
-                                style: AppTypography.supporting.copyWith(
-                                  color: RuralCareColors.primary,
-                                  fontWeight: FontWeight.w600,
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF104A7B),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Center(
+                              child: Text(
+                                initials,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.chevron_right_rounded, color: RuralCareColors.textSecondary, size: 20),
-                            ],
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -2,
+                            right: -2,
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                color: RuralCareColors.success,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.check, size: 10, color: Colors.white),
+                            ),
                           ),
                         ],
                       ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(patient.fullName, style: AppTypography.cardTitle),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: AppDecorations.statusBadge(background: RuralCareColors.primarySoft),
+                              child: Text(
+                                'ID: ${patient.ruralCareId}',
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: RuralCareColors.primary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on_outlined, size: 13, color: RuralCareColors.textSecondary),
+                                const SizedBox(width: 3),
+                                Expanded(
+                                  child: Text(
+                                    '${patient.village}, ${patient.district} • Kashti PHC',
+                                    style: AppTypography.supporting,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (ctx) => PersonalDetailsScreen(patient: patient)),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: RuralCareColors.surfaceSubtle,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: RuralCareColors.border),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.edit_outlined, size: 14, color: RuralCareColors.primary),
+                              SizedBox(width: 4),
+                              Text(
+                                'Edit',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: RuralCareColors.primary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // SETTINGS & CLINICAL ACCESS CARDS
+                const Text(
+                  'SETTINGS & PREFERENCES',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    color: RuralCareColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Card 1: Personal Details
+                _buildNavigationCard(
+                  icon: Icons.badge_outlined,
+                  iconBg: RuralCareColors.primarySoft,
+                  iconColor: const Color(0xFF104A7B),
+                  title: 'Personal Details',
+                  subtitle: 'Name, phone, age, gender & village',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (ctx) => PersonalDetailsScreen(patient: patient)),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // Card 2: Language & Accessibility
+                _buildNavigationCard(
+                  icon: Icons.translate_rounded,
+                  iconBg: const Color(0xFFEEF2FF),
+                  iconColor: const Color(0xFF4338CA),
+                  title: 'Language & Accessibility',
+                  subtitle: 'English, हिन्दी, मराठी • Text size & contrast',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (ctx) => const LanguageAccessibilityScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // Card 3: Emergency Contacts
+                _buildNavigationCard(
+                  icon: Icons.emergency_share_outlined,
+                  iconBg: RuralCareColors.criticalSoft,
+                  iconColor: RuralCareColors.critical,
+                  title: 'Emergency Contacts',
+                  subtitle: '1 contact configured',
+                  statusPill: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: AppDecorations.statusBadge(background: RuralCareColors.successSoft),
+                    child: const Text(
+                      'Active',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: RuralCareColors.success),
                     ),
                   ),
-                  const Divider(color: RuralCareColors.border, height: 1),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (ctx) => PrivacySecurityScreen(patient: patient)),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // Card 4: Privacy & Data Sharing
+                _buildNavigationCard(
+                  icon: Icons.shield_outlined,
+                  iconBg: RuralCareColors.warningSoft,
+                  iconColor: RuralCareColors.warning,
+                  title: 'Privacy & Data Sharing',
+                  subtitle: 'Manage care record sharing with clinic',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (ctx) => PrivacySecurityScreen(patient: patient)),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // Card 5: Account & Security
+                _buildNavigationCard(
+                  icon: Icons.lock_reset_rounded,
+                  iconBg: RuralCareColors.surfaceSubtle,
+                  iconColor: RuralCareColors.textPrimary,
+                  title: 'Account & Security',
+                  subtitle: 'Phone number, session & preferences',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (ctx) => PrivacySecurityScreen(patient: patient)),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // FOOTER NOTE & APP PERSISTENCE
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: RuralCareColors.surfaceSubtle,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: RuralCareColors.border),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.verified_rounded, color: RuralCareColors.teal, size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Data saved on this device (Offline Outbox Ready)',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: RuralCareColors.textPrimary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Role Switcher Tile (Testing Persona)
+                InkWell(
+                  onTap: () => DemoRoleSwitcher.show(context),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: RuralCareColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: RuralCareColors.border),
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Offline auto-sync', style: AppTypography.body),
-                        Switch.adaptive(
-                          value: !cache.isOffline,
-                          activeColor: RuralCareColors.primary,
-                          onChanged: (val) => cache.toggleOfflineMode(),
+                        Row(
+                          children: [
+                            const Icon(Icons.swap_horiz_rounded, color: RuralCareColors.primary, size: 20),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Switch Role Persona', style: AppTypography.body),
+                                Text('Current: ${session.activeRole.name}', style: AppTypography.supporting),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: RuralCareColors.textSecondary),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Sign Out Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: RuralCareColors.critical,
+                      backgroundColor: RuralCareColors.criticalSoft,
+                      side: BorderSide(color: RuralCareColors.critical.withOpacity(0.3)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Sign Out from Device?'),
+                          content: const Text('All queued local records will remain safely saved in offline outbox cache.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              style: AppDecorations.primaryButton(),
+                              onPressed: () {
+                                Navigator.of(ctx).pop();
+                                session.resetToOnboarding();
+                              },
+                              child: const Text('Sign Out'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.logout_rounded, size: 16),
+                        SizedBox(width: 8),
+                        Text(
+                          'Sign Out from Device',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                         ),
                       ],
                     ),
                   ),
-                ]),
+                ),
 
-                const SizedBox(height: 24),
-
-                // 5. Account & Demo Role Switcher
-                const Text('Account', style: AppTypography.sectionTitle),
-                const SizedBox(height: 10),
-                _buildSectionContainer([
-                  ListTile(
-                    title: const Text('Switch user role (Testing)', style: AppTypography.body),
-                    subtitle: Text('Current: ${session.activeRole.name}', style: AppTypography.supporting),
-                    trailing: const Icon(Icons.swap_horiz_rounded, color: RuralCareColors.primary),
-                    onTap: () => DemoRoleSwitcher.show(context),
-                  ),
-                ]),
-
-                const SizedBox(height: 32),
+                const SizedBox(height: 36),
               ],
             ),
           ),
@@ -143,116 +488,65 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     );
   }
 
-  Widget _buildRuralCareIdCard(PatientDto patient) {
-    return Container(
-      width: double.infinity,
-      decoration: AppDecorations.card(),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
+  Widget _buildNavigationCard({
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    Widget? statusPill,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: AppDecorations.card(),
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'RuralCare Health ID',
-                    style: AppTypography.supporting.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: RuralCareColors.textSecondary,
-                    ),
+                  Row(
+                    children: [
+                      Text(title, style: AppTypography.cardTitle),
+                      if (statusPill != null) ...[
+                        const SizedBox(width: 8),
+                        statusPill,
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    patient.abhaId,
-                    style: AppTypography.cardTitle.copyWith(letterSpacing: 0.5),
-                  ),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: AppTypography.supporting, overflow: TextOverflow.ellipsis),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: RuralCareColors.surfaceSubtle,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: RuralCareColors.border),
-                ),
-                child: const Icon(Icons.qr_code_2_rounded, size: 40, color: RuralCareColors.textPrimary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          const Divider(color: RuralCareColors.border, height: 1),
-          const SizedBox(height: 12),
-          Text(
-            patient.fullName,
-            style: AppTypography.cardTitle,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Primary beneficiary • ${patient.village} sector',
-            style: AppTypography.supporting,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionContainer(List<Widget> children) {
-    return Container(
-      decoration: AppDecorations.card(),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _profileRow(String label, String value) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: AppTypography.supporting),
-              Text(value, style: AppTypography.body.copyWith(fontWeight: FontWeight.w500)),
-            ],
-          ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: RuralCareColors.textSecondary, size: 20),
+          ],
         ),
-        const Divider(color: RuralCareColors.border, height: 1),
-      ],
+      ),
     );
   }
 
-  void _openLanguageDialog(BuildContext context, SessionCoordinator session) {
-    showDialog(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Select language', style: AppTypography.sectionTitle),
-        children: [
-          SimpleDialogOption(
-            onPressed: () {
-              session.switchLanguage('English');
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('English', style: AppTypography.body),
-          ),
-          SimpleDialogOption(
-            onPressed: () {
-              session.switchLanguage('Hindi');
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('हिन्दी (Hindi)', style: AppTypography.body),
-          ),
-          SimpleDialogOption(
-            onPressed: () {
-              session.switchLanguage('Marathi');
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('मराठी (Marathi)', style: AppTypography.body),
-          ),
-        ],
-      ),
-    );
+  String _getInitials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+      return parts[0][0].toUpperCase();
+    }
+    return 'PT';
   }
 }

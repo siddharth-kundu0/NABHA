@@ -141,4 +141,66 @@ class PatientRepository extends ChangeNotifier {
   }
 
   Future<void> updatePatientVitals(String patientId, VitalsDto newVitals) => updateVitals(patientId, newVitals);
+
+  Future<void> updatePatientProfile({
+    required String patientId,
+    String? fullName,
+    int? age,
+    String? gender,
+    String? phoneNumber,
+    String? village,
+    String? subCentre,
+    String? district,
+    EmergencyContactDto? emergencyContact,
+  }) async {
+    final idx = _patients.indexWhere((p) => p.id == patientId);
+    if (idx != -1) {
+      final old = _patients[idx];
+      final updated = PatientDto(
+        id: old.id,
+        ruralCareId: old.ruralCareId,
+        abhaId: old.abhaId,
+        fullName: fullName ?? old.fullName,
+        age: age ?? old.age,
+        gender: gender ?? old.gender,
+        phoneNumber: phoneNumber ?? old.phoneNumber,
+        village: village ?? old.village,
+        subCentre: subCentre ?? old.subCentre,
+        district: district ?? old.district,
+        assignedAsha: old.assignedAsha,
+        isPregnant: old.isPregnant,
+        gestationalAgeWeeks: old.gestationalAgeWeeks,
+        ancVisitsCompleted: old.ancVisitsCompleted,
+        edd: old.edd,
+        highRiskConditions: old.highRiskConditions,
+        chronicConditions: old.chronicConditions,
+        allergies: old.allergies,
+        emergencyContact: emergencyContact ?? old.emergencyContact,
+        latestVitals: old.latestVitals,
+      );
+
+      _patients[idx] = updated;
+
+      if (_cache.isOffline) {
+        _cache.queueMutation('PATIENT_PROFILE', 'UPDATE', updated.toJson());
+      } else {
+        try {
+          FirebaseFirestore.instance
+              .collection('patients')
+              .doc(patientId)
+              .set(updated.toJson(), SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('Firestore profile update notice: $e');
+        }
+      }
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateEmergencyContact({
+    required String patientId,
+    required EmergencyContactDto contact,
+  }) async {
+    await updatePatientProfile(patientId: patientId, emergencyContact: contact);
+  }
 }

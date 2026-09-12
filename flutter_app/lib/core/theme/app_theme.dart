@@ -217,6 +217,43 @@ class AppDecorations {
       border: border != null ? Border.all(color: border, width: 1.0) : null,
     );
   }
+
+  /// 52px primary action button style (radius 12, bold text, primary background)
+  static ButtonStyle primaryButton({Color? backgroundColor}) {
+    return ElevatedButton.styleFrom(
+      backgroundColor: backgroundColor ?? RuralCareColors.primary,
+      foregroundColor: Colors.white,
+      minimumSize: const Size(double.infinity, 52),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      textStyle: AppTypography.button,
+      elevation: 0,
+    );
+  }
+
+  /// 52px form input decoration (1px input-border, radius 10, clean background)
+  static InputDecoration input({required String hintText, Widget? prefixIcon, Widget? suffixIcon}) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: AppTypography.supporting,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: RuralCareColors.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: RuralCareColors.inputBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: RuralCareColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: RuralCareColors.primary, width: 1.5),
+      ),
+    );
+  }
 }
 
 class RuralCareTheme {
