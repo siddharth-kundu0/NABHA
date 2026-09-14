@@ -37,6 +37,7 @@ dependencies:
   cloud_firestore: ^6.9.0
   pdf: ^3.13.0
   printing: ^5.15.0
+  zego_uikit_prebuilt_call: ^4.24.4
 
 dev_dependencies:
   flutter_test:
