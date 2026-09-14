@@ -102,7 +102,12 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
       _painSeverity = widget.initialPainSeverity!;
     }
 
-    _selectedDoctor = DoctorRepository().autoSelectDoctor(specialty: _selectedSpecialty);
+    final session = SessionCoordinator();
+    _selectedDoctor = DoctorRepository().autoSelectDoctor(
+      specialty: _selectedSpecialty,
+      facilityId: session.assignedFacilityId,
+      subCentre: session.assignedCatchment,
+    );
     _recalculateTriage();
   }
 
@@ -184,7 +189,12 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
     final patientRepo = PatientRepository();
     final patient = patientRepo.defaultPatient ?? patientRepo.activePatient;
     final patientName = patient?.fullName ?? (SessionCoordinator().isHindi ? 'नागरिक' : 'Patient');
-    final doctor = _selectedDoctor ?? DoctorRepository().autoSelectDoctor(specialty: _selectedSpecialty);
+    final session = SessionCoordinator();
+    final doctor = _selectedDoctor ?? DoctorRepository().autoSelectDoctor(
+      specialty: _selectedSpecialty,
+      facilityId: session.assignedFacilityId,
+      subCentre: session.assignedCatchment,
+    );
     
     if (doctor == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -228,6 +238,7 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
           doctorName: doctor.name,
           specialty: doctor.specialty,
           appointmentId: aptId,
+          facilityName: doctor.facilityName,
         ),
       ),
     );
@@ -1294,6 +1305,7 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
     final subCentreDoctors = DoctorRepository().getDoctorsForSubCentre(
       subCentre: patientSubCentre,
       specialty: _selectedSpecialty,
+      facilityId: session.assignedFacilityId,
     );
 
     final matchingDoctors = subCentreDoctors.isNotEmpty

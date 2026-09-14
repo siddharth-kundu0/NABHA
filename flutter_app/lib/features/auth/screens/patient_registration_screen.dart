@@ -40,6 +40,7 @@ class _PatientRegistrationScreenState extends State<PatientRegistrationScreen> {
   static const List<Map<String, String>> _subCentres = [
     {
       'id': 'Kashti Sub-Centre',
+      'facilityId': 'FAC-SC-102',
       'en': 'Kashti Sub-Centre (Shirur)',
       'hi': 'काष्टी उप-केंद्र (शिरूर)',
       'mr': 'काष्टी उप-केंद्र (शिरूर)',
@@ -49,6 +50,7 @@ class _PatientRegistrationScreenState extends State<PatientRegistrationScreen> {
     },
     {
       'id': 'Rampur Sub-Centre',
+      'facilityId': 'FAC-SC-103',
       'en': 'Rampur Sub-Centre (Shirur)',
       'hi': 'रामपूर उप-केंद्र (शिरूर)',
       'mr': 'रामपूर उप-केंद्र (शिरूर)',
@@ -58,6 +60,7 @@ class _PatientRegistrationScreenState extends State<PatientRegistrationScreen> {
     },
     {
       'id': 'Kalyanpur Sub-Centre',
+      'facilityId': 'FAC-SC-104',
       'en': 'Kalyanpur Sub-Centre (Haveli)',
       'hi': 'कल्याणपूर उप-केंद्र (हवेली)',
       'mr': 'कल्याणपूर उप-केंद्र (हवेली)',
@@ -67,6 +70,7 @@ class _PatientRegistrationScreenState extends State<PatientRegistrationScreen> {
     },
     {
       'id': 'Shirur Rural Sub-Centre',
+      'facilityId': 'FAC-SC-105',
       'en': 'Shirur Rural Sub-Centre (Shirur)',
       'hi': 'शिरूर ग्रामीण उप-केंद्र (शिरूर)',
       'mr': 'शिरूर ग्रामीण उप-केंद्र (शिरूर)',
@@ -76,6 +80,7 @@ class _PatientRegistrationScreenState extends State<PatientRegistrationScreen> {
     },
     {
       'id': 'Daund Sub-Centre',
+      'facilityId': 'FAC-SC-106',
       'en': 'Daund Sub-Centre (Daund)',
       'hi': 'दौंड उप-केंद्र (दौंड)',
       'mr': 'दौंड उप-केंद्र (दौंड)',
@@ -273,12 +278,17 @@ class _PatientRegistrationScreenState extends State<PatientRegistrationScreen> {
   void _finalizeAndEnterDashboard() {
     final session = SessionCoordinator();
     if (_registeredPatient != null) {
+      final matched = _subCentres.firstWhere(
+        (s) => s['id'] == _registeredPatient!.subCentre,
+        orElse: () => _subCentres.first,
+      );
       session.setAuthenticatedUser(
         uid: _registeredPatient!.id,
         email: '${_mobileCtrl.text.trim()}@ruralcare.nabha.gov.in',
         role: AppRole.patient,
         displayName: _registeredPatient!.fullName,
         catchment: _registeredPatient!.subCentre,
+        facilityId: matched['facilityId'],
       );
       PatientRepository().setActivePatient(_registeredPatient!);
     }

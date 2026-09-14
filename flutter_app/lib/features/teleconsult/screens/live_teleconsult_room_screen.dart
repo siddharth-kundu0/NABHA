@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/app/routes.dart';
-import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/data/repositories/appointment_repository.dart';
 import 'package:ruralcare/features/doctor/screens/doctor_care_plan_screen.dart';
@@ -15,6 +14,7 @@ class LiveTeleconsultRoomScreen extends StatefulWidget {
   final String doctorName;
   final String specialty;
   final String? appointmentId;
+  final String? facilityName;
 
   const LiveTeleconsultRoomScreen({
     super.key,
@@ -22,6 +22,7 @@ class LiveTeleconsultRoomScreen extends StatefulWidget {
     required this.doctorName,
     required this.specialty,
     this.appointmentId,
+    this.facilityName,
   });
 
   @override
@@ -153,27 +154,10 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
               final patientRepo = PatientRepository();
               final patient = patientRepo.patients.isNotEmpty
                   ? patientRepo.patients.firstWhere(
-                      (p) => p.fullName == widget.patientName,
-                      orElse: () => patientRepo.activePatient ?? patientRepo.patients.first,
+                      (p) => p.fullName == widget.patientName || p.id == widget.patientName,
+                      orElse: () => patientRepo.activePatient ?? patientRepo.getOrCreatePatientForIdentifier(widget.patientName),
                     )
-                  : PatientDto(
-                      id: 'pat-active',
-                      ruralCareId: 'RC-9921',
-                      abhaId: '91-4829-1029-4821',
-                      fullName: widget.patientName,
-                      age: 42,
-                      gender: 'Female',
-                      phoneNumber: '9876543210',
-                      village: 'Rampur',
-                      subCentre: 'Rampur Health Sub-Centre',
-                      district: 'Bilaspur',
-                      assignedAsha: 'Sunita Bai',
-                      emergencyContact: const EmergencyContactDto(
-                        name: 'Ramesh',
-                        relationship: 'Spouse',
-                        phoneNumber: '9876543211',
-                      ),
-                    );
+                  : patientRepo.getOrCreatePatientForIdentifier(widget.patientName);
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
                   builder: (c) => DoctorCarePlanScreen(
@@ -277,6 +261,12 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
       builder: (context, _) {
         final isHi = session.isHindi;
         final isMr = session.isMarathi;
+        final isDoctorRole = session.activeRole == AppRole.doctor;
+        final remoteName = isDoctorRole ? widget.patientName : widget.doctorName;
+        final localName = isDoctorRole ? widget.doctorName : widget.patientName;
+        final remoteSubtitle = isDoctorRole
+            ? (widget.facilityName != null ? 'Patient • ${widget.facilityName}' : 'Sub-Centre Tele-OPD')
+            : '${widget.specialty} • ${widget.facilityName ?? 'Tele-OPD'}';
 
         return Scaffold(
           backgroundColor: const Color(0xFF131B2E),
@@ -305,12 +295,12 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
                           ),
                           const SizedBox(height: 14),
                           Text(
-                            widget.doctorName,
+                            remoteName,
                             style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: Colors.white),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${widget.specialty} • PHC Rampur',
+                            remoteSubtitle,
                             style: const TextStyle(fontSize: 13, color: Colors.white70),
                           ),
                         ],
@@ -335,8 +325,8 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
                         const SizedBox(width: 6),
                         Text(
                           isHi
-                              ? '${widget.doctorName} बोल रहे हैं'
-                              : (isMr ? '${widget.doctorName} बोलत आहेत' : '${widget.doctorName} speaking'),
+                              ? '$remoteName बोल रहे हैं'
+                              : (isMr ? '$remoteName बोलत आहेत' : '$remoteName speaking'),
                           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
                         ),
                       ],
@@ -382,7 +372,7 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  widget.patientName.split(' ').first,
+                                  localName.split(' ').first,
                                   style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.w600),
                                 ),
                                 Icon(
@@ -487,11 +477,14 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
                             Row(
                               children: [
                                 Text(
-                                  widget.doctorName,
+                                  remoteName,
                                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
                                 ),
                                 const SizedBox(width: 6),
-                                const Text('• PHC Rampur', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                                Text(
+                                  '• ${widget.facilityName ?? 'Tele-OPD'}',
+                                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 2),

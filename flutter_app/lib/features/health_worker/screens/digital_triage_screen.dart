@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/data/repositories/doctor_repository.dart';
 import 'package:ruralcare/features/teleconsult/screens/live_teleconsult_room_screen.dart';
 import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
 
@@ -240,12 +241,20 @@ class _DigitalTriageScreenState extends State<DigitalTriageScreen> {
                 height: 52,
                 child: ElevatedButton.icon(
                   onPressed: () {
+                    final autoDoc = DoctorRepository().autoSelectDoctor(
+                      subCentre: patient.subCentre,
+                      specialty: 'Obstetrics & Gynaecology',
+                    );
+                    final docName = autoDoc?.name ?? 'On-Duty Medical Officer';
+                    final docSpec = autoDoc?.specialty ?? 'General Medicine';
+                    final docFac = autoDoc?.facilityName ?? patient.subCentre;
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (ctx) => LiveTeleconsultRoomScreen(
                           patientName: patient.fullName,
-                          doctorName: 'Dr. Anjali Deshmukh',
-                          specialty: 'Obstetrics & Gynaecology',
+                          doctorName: docName,
+                          specialty: docSpec,
+                          facilityName: docFac,
                         ),
                       ),
                     );

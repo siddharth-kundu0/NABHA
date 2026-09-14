@@ -106,18 +106,21 @@ class DoctorRepository extends ChangeNotifier {
     if (_registeredDoctors.isEmpty) return null;
 
     var pool = _registeredDoctors;
-    if (subCentre != null && subCentre.isNotEmpty) {
-      final subClean = subCentre.toLowerCase().replaceAll('sub-centre', '').replaceAll('उप-केंद्र', '').replaceAll('(शिरूर)', '').replaceAll('(हवेली)', '').replaceAll('(दौंड)', '').trim();
-      final subMatches = pool.where((d) =>
-          d.facilityName.toLowerCase().contains(subClean) ||
-          d.facilityId.toLowerCase().contains(subClean));
-      if (subMatches.isNotEmpty) {
-        pool = subMatches.toList();
-      }
-    } else if (facilityId != null && facilityId.isNotEmpty) {
-      final facMatches = pool.where((d) => d.facilityId == facilityId);
+    if (facilityId != null && facilityId.isNotEmpty) {
+      final facMatches = pool.where((d) => d.facilityId.toLowerCase() == facilityId.toLowerCase());
       if (facMatches.isNotEmpty) {
         pool = facMatches.toList();
+      }
+    }
+    if (subCentre != null && subCentre.isNotEmpty) {
+      final subClean = subCentre.toLowerCase().replaceAll('sub-centre', '').replaceAll('उप-केंद्र', '').replaceAll('(शिरूर)', '').replaceAll('(हवेली)', '').replaceAll('(दौंड)', '').trim();
+      if (subClean.isNotEmpty) {
+        final subMatches = pool.where((d) =>
+            d.facilityName.toLowerCase().contains(subClean) ||
+            d.facilityId.toLowerCase().contains(subClean));
+        if (subMatches.isNotEmpty) {
+          pool = subMatches.toList();
+        }
       }
     }
 
@@ -135,15 +138,19 @@ class DoctorRepository extends ChangeNotifier {
   List<RegisteredDoctorAccount> getDoctorsForSubCentre({
     required String subCentre,
     String? specialty,
+    String? facilityId,
   }) {
     if (_registeredDoctors.isEmpty) return [];
     final clean = subCentre.toLowerCase().replaceAll('sub-centre', '').replaceAll('उप-केंद्र', '').replaceAll('(शिरूर)', '').replaceAll('(हवेली)', '').replaceAll('(दौंड)', '').trim();
     
     return _registeredDoctors.where((d) {
-      final matchSub = clean.isEmpty ||
+      final matchFac = facilityId != null && facilityId.isNotEmpty && d.facilityId.toLowerCase() == facilityId.toLowerCase();
+      final matchSub = clean.isNotEmpty && (
           d.facilityName.toLowerCase().contains(clean) ||
-          d.facilityId.toLowerCase().contains(clean);
-      if (!matchSub) return false;
+          d.facilityId.toLowerCase().contains(clean));
+      if (!matchFac && !matchSub && (facilityId != null || clean.isNotEmpty)) {
+        return false;
+      }
 
       if (specialty != null && specialty.isNotEmpty && specialty != 'General Medicine') {
         return d.specialty.toLowerCase().contains(specialty.toLowerCase()) ||

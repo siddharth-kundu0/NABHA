@@ -37,12 +37,14 @@ class PatientRepository extends ChangeNotifier {
     return _patients;
   }
 
-  PatientDto getOrCreatePatientForIdentifier(String identifier) {
+  PatientDto getOrCreatePatientForIdentifier(String identifier, {String? subCentre, String? district}) {
     final cleanId = identifier.replaceAll(RegExp(r'[^0-9]'), '');
+    final cleanName = identifier.trim().toLowerCase();
     final matches = _patients.where((p) {
       final cleanPhone = p.phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
       final cleanAbha = p.abhaId.replaceAll(RegExp(r'[^0-9]'), '');
       return p.id == identifier ||
+          p.fullName.trim().toLowerCase() == cleanName ||
           (cleanId.isNotEmpty && cleanPhone.endsWith(cleanId)) ||
           (cleanId.isNotEmpty && cleanAbha.endsWith(cleanId));
     });
@@ -52,22 +54,30 @@ class PatientRepository extends ChangeNotifier {
       return matches.first;
     }
 
+    if (_activePatient != null && _activePatient!.fullName.trim().toLowerCase() == cleanName) {
+      return _activePatient!;
+    }
+
+    final isNumeric = cleanId.length >= 6;
+    final displayName = isNumeric ? 'Citizen ($identifier)' : (identifier.isNotEmpty ? identifier : 'Registered Beneficiary');
+    final genSuffix = DateTime.now().millisecondsSinceEpoch % 900 + 100;
+
     final newPatient = PatientDto(
-      id: 'pat-${identifier.hashCode.abs().toString().substring(0, 6)}',
-      ruralCareId: 'RC-MH-${identifier.length >= 4 ? identifier.substring(identifier.length - 4) : "1001"}',
+      id: 'pat-${identifier.hashCode.abs().toString().padLeft(6, '0').substring(0, 6)}',
+      ruralCareId: 'RC-MH-$genSuffix',
       abhaId: '91-${identifier.length >= 8 ? "${identifier.substring(0, 4)}-${identifier.substring(4, 8)}" : "8492-1029"}-8472',
-      fullName: 'Citizen ($identifier)',
-      age: 28,
-      gender: 'FEMALE',
-      phoneNumber: identifier.startsWith('+') ? identifier : '+91$identifier',
+      fullName: displayName,
+      age: 30,
+      gender: 'OTHER',
+      phoneNumber: isNumeric ? (identifier.startsWith('+') ? identifier : '+91$identifier') : '+91 9800000000',
       village: 'Kashti',
-      subCentre: 'Kashti Sub-Centre',
-      district: 'Pune Rural',
-      assignedAsha: 'Sunita Tai Gaikwad',
-      emergencyContact: EmergencyContactDto(
+      subCentre: subCentre ?? 'Kashti Sub-Centre',
+      district: district ?? 'Pune Rural',
+      assignedAsha: 'Sunita Tai Gaikwad (ASHA-MH-401)',
+      emergencyContact: const EmergencyContactDto(
         name: 'Family Member',
-        relationship: 'Family',
-        phoneNumber: identifier.startsWith('+') ? identifier : '+91$identifier',
+        relationship: 'Guardian',
+        phoneNumber: '+91 9800000001',
       ),
     );
     addPatient(newPatient);
@@ -93,6 +103,7 @@ class PatientRepository extends ChangeNotifier {
     }
     return null;
   }
+
 
   void bindFirestoreStream({AppRole role = AppRole.doctor, String? userId, String? subCentre}) {
     _firestoreSubscription?.cancel();

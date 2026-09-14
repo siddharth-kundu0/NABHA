@@ -860,6 +860,7 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
                           doctorName: doctor.name,
                           specialty: apt.specialty,
                           appointmentId: apt.id,
+                          facilityName: apt.facilityName,
                         ),
                       ),
                     );

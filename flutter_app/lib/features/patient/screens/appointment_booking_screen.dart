@@ -8,6 +8,7 @@ import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/data/repositories/doctor_repository.dart';
 import 'package:ruralcare/features/patient/utils/patient_strings.dart';
 import 'package:ruralcare/features/teleconsult/screens/live_teleconsult_room_screen.dart';
+import 'package:ruralcare/data/repositories/facility_repository.dart';
 
 /// Appointments screen adhering strictly to DESIGN.md Section 6:
 /// - Distinct Upcoming vs Past views.
@@ -28,19 +29,29 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
   final TextEditingController _complaintController = TextEditingController();
   final TextEditingController _searchCtrl = TextEditingController();
 
-  String _selectedFacility = 'Baramati Sub-District Hospital (SDH)';
+  String _selectedFacility = 'Kashti Sub-Centre (उप-केंद्र)';
   String _selectedSpecialty = 'General Medicine';
   String _selectedSlot = 'Today, 10:00 AM - 10:30 AM';
   String _selectedType = 'TELECONSULTATION';
   final Set<String> _selectedSymptoms = {};
 
-  final List<String> _facilitiesList = [
-    'Kashti Sub-Centre (Shirur)',
-    'Shirur Rural PHC (Shirur)',
-    'Daund Community Health Centre (CHC)',
-    'Baramati Sub-District Hospital (SDH)',
-    'Aundh District Hospital (Pune)',
-  ];
+  late List<String> _facilitiesList;
+
+  @override
+  void initState() {
+    super.initState();
+    final facs = FacilityRepository().facilities.map((f) => f.name).toList();
+    _facilitiesList = facs.isNotEmpty
+        ? facs
+        : [
+            'Kashti Sub-Centre (उप-केंद्र)',
+            'Shirur Rural PHC (Shirur)',
+            'Daund Community Health Centre (CHC)',
+            'Baramati Sub-District Hospital (SDH)',
+            'Aundh District Hospital (Pune)',
+          ];
+    _selectedFacility = _facilitiesList.first;
+  }
 
   final List<String> _specialtiesList = [
     'General Medicine',
@@ -324,6 +335,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                               doctorName: apt.doctorName,
                               specialty: apt.specialty,
                               appointmentId: apt.id,
+                              facilityName: apt.facilityName,
                             ),
                           ),
                         );
@@ -568,6 +580,24 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
 
     final doctorRepo = DoctorRepository();
     final session = SessionCoordinator();
+    final facRepo = FacilityRepository();
+
+    // Default facility to patient's catchment or assigned facility
+    final assignedFacId = session.assignedFacilityId;
+    if (assignedFacId != null && assignedFacId.isNotEmpty) {
+      final matchedFac = facRepo.getFacilityById(assignedFacId);
+      if (matchedFac != null && _facilitiesList.contains(matchedFac.name)) {
+        _selectedFacility = matchedFac.name;
+      }
+    } else if (patient.subCentre.isNotEmpty) {
+      final cleanSub = patient.subCentre.toLowerCase().replaceAll('sub-centre', '').replaceAll('उप-केंद्र', '').trim();
+      final matchedFac = facRepo.facilities.where(
+        (f) => f.name.toLowerCase().contains(cleanSub),
+      ).toList();
+      if (matchedFac.isNotEmpty && _facilitiesList.contains(matchedFac.first.name)) {
+        _selectedFacility = matchedFac.first.name;
+      }
+    }
 
     showModalBottomSheet(
       context: context,
@@ -734,6 +764,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                     final onDutyDoc = doctorRepo.autoSelectDoctor(
                       specialty: _selectedSpecialty,
                       subCentre: patient.subCentre,
+                      facilityId: session.assignedFacilityId,
                     );
                     final hasDoc = onDutyDoc != null;
                     return Container(
@@ -783,6 +814,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                       final autoDoctor = doctorRepo.autoSelectDoctor(
                         specialty: _selectedSpecialty,
                         subCentre: patient.subCentre,
+                        facilityId: session.assignedFacilityId,
                       );
                       if (autoDoctor == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -828,7 +860,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                         patientName: patient.fullName,
                         doctorName: doctorName,
                         specialty: _selectedSpecialty,
-                        facilityName: _selectedFacility,
+                        facilityName: autoDoctor.facilityName.isNotEmpty ? autoDoctor.facilityName : _selectedFacility,
                         scheduledTime: DateTime.now().add(const Duration(hours: 4)),
                         type: _selectedType,
                         status: 'CONFIRMED',

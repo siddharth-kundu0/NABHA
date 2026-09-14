@@ -385,6 +385,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                         doctorName: upcomingApt.doctorName,
                         specialty: upcomingApt.specialty,
                         appointmentId: upcomingApt.id,
+                        facilityName: upcomingApt.facilityName,
                       ),
                     ),
                   );

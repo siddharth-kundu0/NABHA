@@ -707,6 +707,7 @@ class _DoctorQueueTabState extends State<DoctorQueueTab> {
                                     doctorName: DoctorRepository().getDoctorForSession(SessionCoordinator()).name,
                                     specialty: apt.specialty,
                                     appointmentId: apt.id,
+                                    facilityName: apt.facilityName,
                                   ),
                                 ),
                               );

@@ -5,6 +5,7 @@ import 'package:ruralcare/data/repositories/doctor_repository.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/features/teleconsult/screens/teleconsultation_landing_screen.dart';
+import 'package:ruralcare/features/teleconsult/screens/live_teleconsult_room_screen.dart';
 import 'package:ruralcare/features/doctor/widgets/doctor_profile_tab.dart';
 
 void main() {
@@ -152,5 +153,83 @@ void main() {
     // Session should be cleared and onboarding reset
     expect(session.currentUserId, isNull);
     expect(session.hasCompletedOnboarding, false);
+  });
+
+  test('PatientRepository getOrCreatePatientForIdentifier dynamically resolves without mock data', () {
+    final patientRepo = PatientRepository();
+    patientRepo.resetToDefaults();
+
+    expect(patientRepo.patients.isEmpty, true);
+
+    // Dynamic resolution creates dynamic patient with zero hardcoded mock persona
+    final dynamicPatient = patientRepo.getOrCreatePatientForIdentifier('Sunita Sharma', subCentre: 'Kashti Sub-Centre');
+    expect(dynamicPatient.fullName, 'Sunita Sharma');
+    expect(dynamicPatient.subCentre, 'Kashti Sub-Centre');
+    expect(patientRepo.patients.length, 1);
+
+    // Resolving again returns the existing patient
+    final existing = patientRepo.getOrCreatePatientForIdentifier('Sunita Sharma');
+    expect(existing.id, dynamicPatient.id);
+  });
+
+  testWidgets('LiveTeleconsultRoomScreen displays remote participant based on user role', (tester) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final session = SessionCoordinator();
+
+    // 1. Patient perspective: Main video frame displays Doctor Name and Specialty + Facility
+    session.setAuthenticatedUser(
+      uid: 'pat-001',
+      role: AppRole.patient,
+      displayName: 'Ramesh Patil',
+      catchment: 'Kashti Sub-Centre',
+      facilityId: 'FAC-SC-102',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LiveTeleconsultRoomScreen(
+          patientName: 'Ramesh Patil',
+          doctorName: 'Dr. Siddharth Kundu',
+          specialty: 'General Medicine',
+          facilityName: 'Kashti Sub-Centre (उप-केंद्र)',
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+
+    // Remote frame has Doctor name and speaking indicator
+    expect(find.text('Dr. Siddharth Kundu'), findsWidgets);
+    expect(find.text('Dr. Siddharth Kundu speaking'), findsOneWidget);
+    expect(find.text('General Medicine • Kashti Sub-Centre (उप-केंद्र)'), findsOneWidget);
+    expect(find.text('• Kashti Sub-Centre (उप-केंद्र)'), findsOneWidget);
+
+    // 2. Doctor perspective: Main video frame displays Patient Name
+    session.setAuthenticatedUser(
+      uid: 'doc-001',
+      role: AppRole.doctor,
+      displayName: 'Dr. Siddharth Kundu',
+      catchment: 'Kashti Sub-Centre (उप-केंद्र)',
+      facilityId: 'FAC-SC-102',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LiveTeleconsultRoomScreen(
+          patientName: 'Ramesh Patil',
+          doctorName: 'Dr. Siddharth Kundu',
+          specialty: 'General Medicine',
+          facilityName: 'Kashti Sub-Centre (उप-केंद्र)',
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Ramesh Patil'), findsWidgets);
+    expect(find.text('Ramesh Patil speaking'), findsOneWidget);
+    expect(find.text('Patient • Kashti Sub-Centre (उप-केंद्र)'), findsOneWidget);
   });
 }
