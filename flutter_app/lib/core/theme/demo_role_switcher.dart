@@ -107,35 +107,54 @@ class DemoRoleSwitcher extends StatelessWidget {
                         final isSelected = session.activeRole == role;
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
+                          child: Material(
                             color: isSelected ? RuralCareColors.primaryLight : Colors.white,
-                            border: Border.all(
-                              color: isSelected ? RuralCareColors.primary : RuralCareColors.borderSubtle,
-                              width: isSelected ? 1.5 : 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ListTile(
-                            leading: Icon(
-                              _getRoleIcon(role),
-                              color: isSelected ? RuralCareColors.primary : RuralCareColors.secondary,
-                            ),
-                            title: Text(
-                              role.label,
-                              style: TextStyle(
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                color: isSelected ? RuralCareColors.primary : RuralCareColors.textPrimary,
-                                fontSize: 14,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(
+                                color: isSelected ? RuralCareColors.primary : RuralCareColors.borderSubtle,
+                                width: isSelected ? 1.5 : 1.0,
                               ),
                             ),
-                            subtitle: Text(role.description, style: const TextStyle(fontSize: 11)),
-                            trailing: isSelected
-                                ? const Icon(Icons.check_circle_rounded, color: RuralCareColors.primary)
-                                : null,
-                            onTap: () {
-                              session.switchRole(role);
-                              Navigator.pop(ctx);
-                            },
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: () {
+                                session.switchRole(role);
+                                Navigator.pop(ctx);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _getRoleIcon(role),
+                                      color: isSelected ? RuralCareColors.primary : RuralCareColors.secondary,
+                                      size: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            role.label,
+                                            style: TextStyle(
+                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                              color: isSelected ? RuralCareColors.primary : RuralCareColors.textPrimary,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(role.description, style: const TextStyle(fontSize: 11)),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      const Icon(Icons.check_circle_rounded, color: RuralCareColors.primary),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         );
                       }),

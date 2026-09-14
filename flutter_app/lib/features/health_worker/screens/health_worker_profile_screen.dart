@@ -4,6 +4,8 @@ import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/data/repositories/doctor_repository.dart';
+import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
 
 class HealthWorkerProfileScreen extends StatefulWidget {
   const HealthWorkerProfileScreen({super.key});
@@ -30,6 +32,16 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
       builder: (context, _) {
         final totalBeneficiaries = patientRepo.patients.length;
         final pendingMutations = cache.pendingOutboxCount;
+        final activeWorkerName = session.userDisplayName?.isNotEmpty == true ? session.userDisplayName! : _workerName;
+        final activeWorkerPhone = session.currentUserEmail?.isNotEmpty == true && session.currentUserEmail!.contains('@')
+            ? session.currentUserEmail!.split('@')[0]
+            : (session.currentUserId?.isNotEmpty == true ? session.currentUserId! : _workerPhone);
+        final activeWorkerSubcentre = session.assignedCatchment?.isNotEmpty == true ? session.assignedCatchment! : _workerSubcentre;
+        final activeDoc = DoctorRepository().getDoctorForSession(session);
+        final cleanWorker = activeWorkerName.trim();
+        final initials = cleanWorker.isNotEmpty
+            ? cleanWorker.split(' ').where((e) => e.isNotEmpty).map((e) => e[0]).take(2).join().toUpperCase()
+            : 'HW';
 
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -75,9 +87,9 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
                                 ],
                               ),
                               alignment: Alignment.center,
-                              child: const Text(
-                                'KV',
-                                style: TextStyle(
+                              child: Text(
+                                initials,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20,
@@ -106,10 +118,10 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _workerName,
+                                activeWorkerName,
                                 style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
                                   color: AppColors.darkSlate,
                                 ),
                               ),
@@ -117,12 +129,21 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
                               Text(
                                 _workerRole,
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.forestTeal,
+                                  color: Color(0xFF065F46),
                                 ),
                               ),
                               const SizedBox(height: 4),
+                              Text(
+                                activeWorkerSubcentre,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.slateGray,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
                               Row(
                                 children: [
                                   Container(
@@ -168,11 +189,30 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
                             ),
                           ],
                         ),
-                        InkWell(
-                          onTap: () => _showEditProfileSheet(context),
-                          child: const Text(
-                            'Edit Details',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forestTeal),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _showEditProfileSheet(context),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppColors.forestTeal.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppColors.forestTeal.withOpacity(0.3)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.edit_outlined, size: 12, color: AppColors.forestTeal),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Edit Details',
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.forestTeal),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -227,47 +267,71 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.cardBackground,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Local Records', style: TextStyle(fontSize: 10, color: AppColors.slateGray)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '$totalBeneficiaries Cached',
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
-                                ),
-                              ],
+                          child: InkWell(
+                            onTap: () => _showLocalRecordsSheet(context, patientRepo),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardBackground,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.neutral300.withOpacity(0.5)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Local Records', style: TextStyle(fontSize: 10, color: AppColors.slateGray)),
+                                      Icon(Icons.info_outline, size: 12, color: AppColors.forestTeal),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '$totalBeneficiaries Cached',
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.cardBackground,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Outbox Queue', style: TextStyle(fontSize: 10, color: AppColors.slateGray)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '$pendingMutations Pending',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: pendingMutations > 0 ? AppColors.terracotta : const Color(0xFF10B981),
-                                  ),
+                          child: InkWell(
+                            onTap: () => _showOutboxQueueSheet(context, cache),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardBackground,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: pendingMutations > 0 ? AppColors.terracotta.withOpacity(0.4) : AppColors.neutral300.withOpacity(0.5),
                                 ),
-                              ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text('Outbox Queue', style: TextStyle(fontSize: 10, color: AppColors.slateGray)),
+                                      Icon(Icons.open_in_new_rounded, size: 12, color: pendingMutations > 0 ? AppColors.terracotta : const Color(0xFF10B981)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '$pendingMutations Pending',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: pendingMutations > 0 ? AppColors.terracotta : const Color(0xFF10B981),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -284,10 +348,14 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
                                 final messenger = ScaffoldMessenger.of(context);
                                 setState(() => _isSyncing = true);
                                 await cache.flushOutboxQueue();
+                                await Future.delayed(const Duration(milliseconds: 300));
                                 if (mounted) {
                                   setState(() => _isSyncing = false);
                                   messenger.showSnackBar(
-                                    const SnackBar(content: Text('Field outbox queue synchronized with PHC server')),
+                                    const SnackBar(
+                                      content: Text('Field outbox queue synchronized with PHC server (Rampur Hub)'),
+                                      backgroundColor: AppColors.forestTealDark,
+                                    ),
                                   );
                                 }
                               },
@@ -359,9 +427,24 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
                     const SizedBox(height: 8),
                     _profileDetailRow('Total Population', '~1,850 registered residents'),
                     const SizedBox(height: 8),
-                    _profileDetailRow('Medical Officer', 'Dr. Anita Roy (PHC Rampur)'),
+                    _profileDetailRow('Medical Officer', '${activeDoc.name} (${activeDoc.facilityName})'),
                     const SizedBox(height: 8),
-                    _profileDetailRow('Official Contact', _workerPhone),
+                    _profileDetailRow('Official Contact', activeWorkerPhone),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 40,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showCatchmentDetails(context, patientRepo),
+                        icon: const Icon(Icons.people_outline_rounded, size: 16, color: Color(0xFF065F46)),
+                        label: const Text('View Villages & Supervisor Contact', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF0FDF4),
+                          side: const BorderSide(color: Color(0xFFA7F3D0)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -419,21 +502,18 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
                         _langButton(session, 'मराठी', 'म'),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    SwitchListTile(
-                      title: const Text('Larger Text (बड़ा फ़ॉन्ट)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Optimized readability for field visits', style: TextStyle(fontSize: 11)),
+                    const SizedBox(height: 8),
+                    _switchSettingRow(
+                      title: 'Larger Text (बड़ा फ़ॉन्ट)',
+                      subtitle: 'Optimized readability for field visits',
                       value: session.largerText,
-                      activeColor: AppColors.forestTeal,
-                      contentPadding: EdgeInsets.zero,
                       onChanged: (v) => session.toggleLargerText(v),
                     ),
-                    SwitchListTile(
-                      title: const Text('High Contrast (उच्च कंट्रास्ट)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Enhanced visibility in bright sunlight', style: TextStyle(fontSize: 11)),
+                    const Divider(height: 16, color: AppColors.neutral200),
+                    _switchSettingRow(
+                      title: 'High Contrast (उच्च कंट्रास्ट)',
+                      subtitle: 'Enhanced visibility in bright sunlight',
                       value: session.highContrast,
-                      activeColor: AppColors.forestTeal,
-                      contentPadding: EdgeInsets.zero,
                       onChanged: (v) => session.toggleHighContrast(v),
                     ),
                   ],
@@ -473,11 +553,7 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
                       width: double.infinity,
                       height: 42,
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Dialing 108 Emergency Ambulance Control...')),
-                          );
-                        },
+                        onPressed: () => _showEmergencyEscalationSheet(context),
                         icon: const Icon(Icons.phone_in_talk_rounded, color: Colors.white, size: 18),
                         label: const Text('Call 108 Ambulance Dispatcher', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                         style: ElevatedButton.styleFrom(
@@ -519,6 +595,43 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
     );
   }
 
+  Widget _switchSettingRow({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.darkSlate),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 11, color: AppColors.slateGray),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            activeColor: AppColors.forestTeal,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _profileDetailRow(String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,7 +648,11 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
   }
 
   Widget _langButton(SessionCoordinator session, String name, String code) {
-    final isSel = session.activeLanguage == name;
+    final isSel = (code.toLowerCase() == 'en' || name == 'English')
+        ? session.isEnglish
+        : (code == 'hi' || code == 'हि' || name == 'Hindi' || name == 'हिंदी' || name == 'हिन्दी')
+            ? session.isHindi
+            : session.isMarathi;
     return Expanded(
       child: InkWell(
         onTap: () => session.switchLanguage(name),
@@ -621,6 +738,395 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _showCatchmentDetails(BuildContext context, PatientRepository patientRepo) {
+    final villageCounts = <String, int>{};
+    for (final p in patientRepo.patients) {
+      villageCounts[p.village] = (villageCounts[p.village] ?? 0) + 1;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.map_outlined, color: Color(0xFF065F46), size: 22),
+                    SizedBox(width: 8),
+                    Text('Catchment & Supervisor Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkSlate)),
+                  ],
+                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text('ASSIGNED VILLAGES & BENEFICIARIES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.slateGray, letterSpacing: 0.5)),
+            const SizedBox(height: 8),
+            ...villageCounts.entries.map((entry) => Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.location_city_rounded, size: 16, color: AppColors.forestTeal),
+                      const SizedBox(width: 8),
+                      Text(entry.key, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.darkSlate)),
+                    ],
+                  ),
+                  Text('${entry.value} Beneficiaries', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.navyBlue)),
+                ],
+              ),
+            )),
+            const SizedBox(height: 14),
+            const Text('PRIMARY MEDICAL SUPERVISORS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.slateGray, letterSpacing: 0.5)),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.medical_services_outlined, color: Color(0xFF065F46), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${DoctorRepository().getDoctorForSession(SessionCoordinator()).name} (Medical Officer)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.darkSlate)),
+                        Text('${DoctorRepository().getDoctorForSession(SessionCoordinator()).facilityName} • Mobile: +91 94220 88190', style: const TextStyle(fontSize: 10, color: AppColors.slateGray)),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.phone_rounded, color: Color(0xFF065F46), size: 20),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Dialing ${DoctorRepository().getDoctorForSession(SessionCoordinator()).name}...')),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.forestTealDark,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEmergencyEscalationSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.emergency_outlined, color: Color(0xFFDC2626), size: 24),
+                    SizedBox(width: 8),
+                    Text('Emergency Escalation Desk', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+                  ],
+                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Frontline emergency pre-alert protocol for Kashti Sub-Centre. Select an action below:',
+              style: TextStyle(fontSize: 12, color: AppColors.slateGray),
+            ),
+            const SizedBox(height: 16),
+            _emergencyActionTile(
+              icon: Icons.airport_shuttle_rounded,
+              title: 'Call 108 Emergency Ambulance',
+              subtitle: 'Direct link to State EMS control room with live GPS',
+              color: const Color(0xFFDC2626),
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Connected to 108 Dispatcher • Sub-Centre GPS transmitted • ETA 14 mins'),
+                    backgroundColor: Color(0xFFDC2626),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            _emergencyActionTile(
+              icon: Icons.phone_in_talk_rounded,
+              title: 'Call PHC MO (${DoctorRepository().getDoctorForSession(SessionCoordinator()).name})',
+              subtitle: 'Duty Medical Officer • ${DoctorRepository().getDoctorForSession(SessionCoordinator()).facilityName}',
+              color: AppColors.navyBlue,
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Dialing ${DoctorRepository().getDoctorForSession(SessionCoordinator()).name}...'),
+                    backgroundColor: AppColors.navyBlue,
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            _emergencyActionTile(
+              icon: Icons.map_rounded,
+              title: 'Open Live Emergency Tracking',
+              subtitle: 'Track incoming ambulance & notify Sub-District Hospital',
+              color: const Color(0xFF047857),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (c) => const EmergencyTrackingScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _emergencyActionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.slateGray)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: color, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLocalRecordsSheet(BuildContext context, PatientRepository patientRepo) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Cached Local Records (${patientRepo.patients.length})',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'All records are stored encrypted in SQLite / local memory for zero-latency offline operation.',
+              style: TextStyle(fontSize: 11, color: AppColors.slateGray),
+            ),
+            const SizedBox(height: 12),
+            ...patientRepo.patients.take(4).map((p) => Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(p.fullName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.darkSlate)),
+                  Text(p.ruralCareId, style: const TextStyle(fontSize: 11, color: AppColors.forestTeal, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            )),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 42,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.forestTealDark),
+                child: const Text('OK', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showOutboxQueueSheet(BuildContext context, LocalCacheService cache) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Outbox Sync Queue (${cache.pendingOutboxCount})',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              cache.pendingOutboxCount == 0
+                  ? 'All local mutations are currently synchronized with the central server.'
+                  : 'Mutations waiting for server connectivity or sync trigger:',
+              style: const TextStyle(fontSize: 11, color: AppColors.slateGray),
+            ),
+            const SizedBox(height: 12),
+            if (cache.pendingOutboxCount > 0)
+              ...cache.queuedMutations.map((m) => Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(m['action']?.toString() ?? 'Mutation', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.darkSlate)),
+                    Text(m['entityType']?.toString() ?? '', style: const TextStyle(fontSize: 11, color: AppColors.slateGray)),
+                  ],
+                ),
+              )),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      cache.queueMutation('Vitals', 'FOLLOWUP_RECORD', {'bp': '120/80', 'patient': 'pat-001'});
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Test mutation queued in outbox')),
+                      );
+                    },
+                    child: const Text('+ Queue Test', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await cache.flushOutboxQueue();
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Outbox queue synchronized with PHC server')),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.forestTealDark),
+                    child: const Text('Flush Queue', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

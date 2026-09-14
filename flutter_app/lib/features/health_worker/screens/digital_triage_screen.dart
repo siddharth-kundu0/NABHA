@@ -24,7 +24,20 @@ class _DigitalTriageScreenState extends State<DigitalTriageScreen> {
   @override
   Widget build(BuildContext context) {
     final patientRepo = PatientRepository();
-    final patient = patientRepo.defaultPatient;
+    final patient = patientRepo.defaultPatient ?? patientRepo.activePatient;
+    if (patient == null) {
+      return Scaffold(
+        backgroundColor: RuralCareColors.canvas,
+        appBar: AppBar(
+          title: const Text('Clinical triage', style: AppTypography.pageTitle),
+          backgroundColor: RuralCareColors.surface,
+          elevation: 0,
+        ),
+        body: const Center(
+          child: Text('No patient selected. Please register or select a patient.'),
+        ),
+      );
+    }
     final vitals = patient.latestVitals;
 
     final sys = vitals?.systolicBp ?? 120;

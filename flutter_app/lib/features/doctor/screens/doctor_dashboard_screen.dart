@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
-import 'package:ruralcare/data/models/appointment_dto.dart';
-import 'package:ruralcare/data/models/patient_dto.dart';
-import 'package:ruralcare/data/repositories/patient_repository.dart';
-import 'package:ruralcare/data/repositories/appointment_repository.dart';
-import 'package:ruralcare/data/repositories/referral_repository.dart';
-import 'package:ruralcare/features/teleconsult/screens/live_teleconsult_room_screen.dart';
+import 'package:ruralcare/app/routes.dart';
+import 'package:ruralcare/features/doctor/utils/doctor_strings.dart';
+import 'package:ruralcare/features/doctor/widgets/doctor_home_tab.dart';
+import 'package:ruralcare/features/doctor/widgets/doctor_patients_tab.dart';
+import 'package:ruralcare/features/doctor/widgets/doctor_queue_tab.dart';
+import 'package:ruralcare/features/doctor/widgets/doctor_referrals_tab.dart';
+import 'package:ruralcare/features/doctor/widgets/doctor_profile_tab.dart';
+import 'package:ruralcare/data/repositories/notification_repository.dart';
+import 'package:ruralcare/features/notifications/screens/notification_center_screen.dart';
 
-/// Doctor Workspace conforming strictly to DESIGN.md Section 7:
-/// Patient summary above clinical workspace. Sections: concern, vitals, history,
-/// assessment, and care plan. Simple, quiet forms with 52px primary actions.
+/// Doctor / Specialist Workspace conforming strictly to Stitch Design & DESIGN.md
+/// Hosts 5 Primary Destinations: Dashboard, Patients, Queue, Referrals, Profile
 class DoctorDashboardScreen extends StatefulWidget {
   const DoctorDashboardScreen({super.key});
 
@@ -19,317 +20,266 @@ class DoctorDashboardScreen extends StatefulWidget {
 }
 
 class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
-  final TextEditingController _rxMedicineCtrl = TextEditingController(text: 'Tab. Labetalol 100mg');
-  final TextEditingController _rxDosageCtrl = TextEditingController(text: '100 mg');
-  final TextEditingController _rxFrequencyCtrl = TextEditingController(text: 'Twice daily after meals');
-  final TextEditingController _carePlanNotesCtrl = TextEditingController(
-    text: 'Daily blood pressure monitoring with ASHA Sunita Gaikwad. Review in 7 days or immediate transfer if BP > 160/100.',
-  );
+  int _currentIndex = 0;
 
-  @override
-  void dispose() {
-    _rxMedicineCtrl.dispose();
-    _rxDosageCtrl.dispose();
-    _rxFrequencyCtrl.dispose();
-    _carePlanNotesCtrl.dispose();
-    super.dispose();
+  void _onTabSelected(int index) {
+    setState(() => _currentIndex = index);
+  }
+
+  Widget _buildCurrentTab() {
+    switch (_currentIndex) {
+      case 0:
+        return DoctorHomeTab(onTabSelected: _onTabSelected);
+      case 1:
+        return const DoctorPatientsTab();
+      case 2:
+        return const DoctorQueueTab();
+      case 3:
+        return const DoctorReferralsTab();
+      case 4:
+        return const DoctorProfileTab();
+      default:
+        return DoctorHomeTab(onTabSelected: _onTabSelected);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final patientRepo = PatientRepository();
-    final aptRepo = AppointmentRepository();
-    final refRepo = ReferralRepository();
+    final session = SessionCoordinator();
 
     return ListenableBuilder(
-      listenable: Listenable.merge([patientRepo, aptRepo, refRepo]),
+      listenable: session,
       builder: (context, _) {
-        final appointments = aptRepo.appointments;
-        final patient = patientRepo.defaultPatient;
+        final strings = DoctorStrings.of(session);
 
         return Scaffold(
           backgroundColor: RuralCareColors.canvas,
           appBar: AppBar(
             backgroundColor: RuralCareColors.surface,
             elevation: 0,
-            title: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            title: Row(
               children: [
-                Text('Dr. Anjali Deshmukh (OB/GYN)', style: AppTypography.cardTitle),
-                Text('Baramati Sub-District Hospital • Room 4', style: AppTypography.supporting),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: RuralCareColors.teal,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.local_hospital, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'RuralCare',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: RuralCareColors.teal,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: session.isOffline ? RuralCareColors.warning : RuralCareColors.success,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          session.isOffline ? strings.offline : strings.online,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: session.isOffline ? RuralCareColors.warning : RuralCareColors.success,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ],
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.swap_horiz_rounded, color: RuralCareColors.textSecondary),
-                tooltip: 'Switch role',
-                onPressed: () => DemoRoleSwitcher.show(context),
+              // Language selector
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: RuralCareColors.surfaceSubtle,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _langBadge('EN', 'en', session),
+                    _langBadge('हि', 'hi', session),
+                    _langBadge('म', 'mr', session),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              // Notification Bell
+              ListenableBuilder(
+                listenable: NotificationRepository(),
+                builder: (context, _) {
+                  final unread = NotificationRepository().getUnreadCount(AppRole.doctor);
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_none_rounded, color: RuralCareColors.textPrimary, size: 24),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const NotificationCenterScreen()),
+                          );
+                        },
+                        tooltip: 'Doctor Notifications',
+                      ),
+                      if (unread > 0)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFC2410C),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '$unread',
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(width: 4),
+              // Profile avatar
+              GestureDetector(
+                onTap: () => setState(() => _currentIndex = 4),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 14),
+                  width: 34,
+                  height: 34,
+                  decoration: const BoxDecoration(
+                    color: RuralCareColors.teal,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Text('AR', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                ),
               ),
             ],
             bottom: const PreferredSize(
               preferredSize: Size.fromHeight(1),
-              child: Divider(color: RuralCareColors.border, height: 1),
+              child: Divider(height: 1, color: RuralCareColors.border),
             ),
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Teleconsultation Waiting Room Queue
-                const Text('Teleconsultation queue', style: AppTypography.sectionTitle),
-                const SizedBox(height: 12),
-                ...appointments.map((apt) => _buildQueueCard(context, apt, patient)),
-
-                const SizedBox(height: 24),
-
-                // 2. Active Patient Summary (DESIGN.md: patient name & essential context above workspace)
-                Text('Active patient workspace: ${patient.fullName}', style: AppTypography.sectionTitle),
-                const SizedBox(height: 12),
-                _buildPatientClinicalSummary(patient),
-
-                const SizedBox(height: 24),
-
-                // 3. Clinical Care Plan & E-Prescription Form
-                const Text('Care plan & prescription', style: AppTypography.sectionTitle),
-                const SizedBox(height: 12),
-                _buildCarePlanCard(context, patient, aptRepo, refRepo),
-
-                const SizedBox(height: 32),
-              ],
-            ),
-          ),
+          body: _buildCurrentTab(),
+          bottomNavigationBar: _buildBottomNavigationBar(strings),
         );
       },
     );
   }
 
-  Widget _buildQueueCard(BuildContext context, AppointmentDto apt, PatientDto patient) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: AppDecorations.card(),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(apt.patientName, style: AppTypography.cardTitle),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: AppDecorations.statusBadge(background: RuralCareColors.primarySoft),
-                child: Text(
-                  apt.appointmentTime,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: RuralCareColors.primary),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Chief concern: ${apt.chiefComplaint.isNotEmpty ? apt.chiefComplaint : "ANC 3rd Trimester evaluation"}',
-            style: AppTypography.supporting,
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (ctx) => LiveTeleconsultRoomScreen(
-                      patientName: apt.patientName,
-                      doctorName: 'Dr. Anjali Deshmukh',
-                      specialty: apt.specialty,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.video_call_outlined, size: 20),
-              label: const Text('Start video consultation'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: RuralCareColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _langBadge(String text, String code, SessionCoordinator session) {
+    final isSelected = code == 'en'
+        ? session.isEnglish
+        : (code == 'hi' ? session.isHindi : session.isMarathi);
 
-  Widget _buildPatientClinicalSummary(PatientDto patient) {
-    final vitals = patient.latestVitals;
-
-    return Container(
-      decoration: AppDecorations.card(),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Demographics & history', style: AppTypography.cardTitle),
-              Text(
-                'ABHA: ${patient.abhaId}',
-                style: AppTypography.supporting.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Age: ${patient.age} yrs • Gestational age: 32 weeks • Gravida 2, Para 1',
-            style: AppTypography.body,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Flagged risks: ${patient.highRiskConditions.join(", ")}',
-            style: AppTypography.supporting.copyWith(color: RuralCareColors.critical, fontWeight: FontWeight.w600),
-          ),
-          const Divider(color: RuralCareColors.border, height: 24),
-          if (vitals != null) ...[
-            const Text('Telemetry vitals from Sub-Centre', style: AppTypography.cardTitle),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _vitalTile('BP', '${vitals.systolicBp}/${vitals.diastolicBp} mmHg', isCritical: vitals.systolicBp > 140),
-                const SizedBox(width: 8),
-                _vitalTile('Hb', '${vitals.haemoglobin} g/dL', isCritical: vitals.haemoglobin < 9.0),
-                const SizedBox(width: 8),
-                _vitalTile('SpO2', '${vitals.spO2}%'),
-                const SizedBox(width: 8),
-                _vitalTile('Pulse', '${vitals.pulse} bpm'),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _vitalTile(String label, String value, {bool isCritical = false}) {
-    return Expanded(
+    return GestureDetector(
+      key: ValueKey('doctor_lang_$code'),
+      onTap: () => session.switchLanguage(code),
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: isCritical ? RuralCareColors.warningSoft : RuralCareColors.surfaceSubtle,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isCritical ? RuralCareColors.warning : RuralCareColors.border),
+          color: isSelected ? RuralCareColors.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? const [BoxShadow(color: Color(0x10000000), blurRadius: 2, offset: Offset(0, 1))]
+              : null,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 10, color: RuralCareColors.textSecondary)),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isCritical ? RuralCareColors.warning : RuralCareColors.textPrimary,
-              ),
-              maxLines: 1,
-            ),
-          ],
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? RuralCareColors.teal : RuralCareColors.textSecondary,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCarePlanCard(
-    BuildContext context,
-    PatientDto patient,
-    AppointmentRepository aptRepo,
-    ReferralRepository refRepo,
-  ) {
+  Widget _buildBottomNavigationBar(DoctorStrings strings) {
     return Container(
-      decoration: AppDecorations.card(),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Prescribe medication', style: AppTypography.cardTitle),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _rxMedicineCtrl,
-            decoration: const InputDecoration(labelText: 'Medicine name & strength'),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _rxDosageCtrl,
-                  decoration: const InputDecoration(labelText: 'Dosage (e.g. 100mg)'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _rxFrequencyCtrl,
-                  decoration: const InputDecoration(labelText: 'Frequency'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text('Counter-referral instructions to ASHA', style: AppTypography.cardTitle),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _carePlanNotesCtrl,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: 'Actionable instructions for frontline home visit...',
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final newPrescription = PrescriptionDto(
-                  id: 'RX-${DateTime.now().millisecondsSinceEpoch % 10000}',
-                  patientId: patient.id,
-                  doctorName: 'Dr. Anjali Deshmukh',
-                  diagnosis: 'Gestational Hypertension (32 Weeks ANC)',
-                  issuedAt: DateTime.now(),
-                  medicines: [
-                    PrescriptionItemDto(
-                      medicineName: _rxMedicineCtrl.text,
-                      dosage: _rxDosageCtrl.text,
-                      frequency: _rxFrequencyCtrl.text,
-                      durationDays: 14,
-                    ),
-                  ],
-                  adviceNotes: _carePlanNotesCtrl.text,
-                );
-                aptRepo.addPrescription(newPrescription);
-                refRepo.dispatchCounterReferral(
-                  referralId: 'REF-BAR-2026-0891',
-                  instructions: _carePlanNotesCtrl.text,
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Prescription issued & care plan dispatched to ASHA!')),
-                );
-              },
-              icon: const Icon(Icons.send_rounded, size: 18),
-              label: const Text('Issue prescription & care plan', style: AppTypography.button),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: RuralCareColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
+      decoration: const BoxDecoration(
+        color: RuralCareColors.surface,
+        border: Border(top: BorderSide(color: RuralCareColors.border)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, -2),
           ),
         ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: [
+              _buildNavItem(0, Icons.dashboard_outlined, Icons.dashboard_rounded, strings.tabDashboard),
+              _buildNavItem(1, Icons.group_outlined, Icons.group_rounded, strings.tabPatients),
+              _buildNavItem(2, Icons.checklist_outlined, Icons.checklist_rounded, strings.tabQueue),
+              _buildNavItem(3, Icons.swap_horiz_outlined, Icons.swap_horiz_rounded, strings.tabReferrals),
+              _buildNavItem(4, Icons.account_circle_outlined, Icons.account_circle_rounded, strings.tabProfile),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData unselectedIcon, IconData selectedIcon, String label) {
+    final isSelected = _currentIndex == index;
+
+    return Expanded(
+      child: GestureDetector(
+        key: ValueKey('doctor_nav_$index'),
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onTabSelected(index),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isSelected ? selectedIcon : unselectedIcon,
+              size: 22,
+              color: isSelected ? RuralCareColors.teal : RuralCareColors.textSecondary,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? RuralCareColors.teal : RuralCareColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

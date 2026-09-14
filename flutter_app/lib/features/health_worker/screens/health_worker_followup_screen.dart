@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/app/routes.dart';
+import '../utils/health_worker_strings.dart';
 
 class HealthWorkerFollowUpScreen extends StatefulWidget {
   final String? patientId;
@@ -12,6 +14,7 @@ class HealthWorkerFollowUpScreen extends StatefulWidget {
 }
 
 class _HealthWorkerFollowUpScreenState extends State<HealthWorkerFollowUpScreen> {
+  String? _activePatientId;
   String _selectedStatus = 'In Progress';
   String _visitMode = 'Home Visit';
   int _systolic = 130;
@@ -21,6 +24,22 @@ class _HealthWorkerFollowUpScreenState extends State<HealthWorkerFollowUpScreen>
   final TextEditingController _noteCtrl = TextEditingController(
     text: 'Patient taking morning medicines regularly. Reported mild headache yesterday. Advised hydration and rest. Scheduled re-check in 3 days.',
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _activePatientId = widget.patientId;
+  }
+
+  @override
+  void didUpdateWidget(covariant HealthWorkerFollowUpScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.patientId != oldWidget.patientId && widget.patientId != null) {
+      setState(() {
+        _activePatientId = widget.patientId;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -51,41 +70,104 @@ class _HealthWorkerFollowUpScreenState extends State<HealthWorkerFollowUpScreen>
   @override
   Widget build(BuildContext context) {
     final patientRepo = PatientRepository();
-    final patient = widget.patientId != null
-        ? patientRepo.patients.firstWhere(
-            (p) => p.id == widget.patientId,
-            orElse: () => patientRepo.defaultPatient,
-          )
-        : patientRepo.defaultPatient;
+    final session = SessionCoordinator();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: widget.isStandalone
-          ? AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: AppColors.darkSlate),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              title: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return ListenableBuilder(
+      listenable: Listenable.merge([patientRepo, session]),
+      builder: (context, _) {
+        final strings = HealthWorkerStrings.of(session);
+        final selectedPatientId = _activePatientId ?? widget.patientId;
+        final patient = selectedPatientId != null
+            ? (patientRepo.patients.isNotEmpty
+                ? patientRepo.patients.firstWhere(
+                    (p) => p.id == selectedPatientId,
+                    orElse: () => patientRepo.activePatient ?? patientRepo.patients.first,
+                  )
+                : patientRepo.activePatient)
+            : (patientRepo.activePatient ?? (patientRepo.patients.isNotEmpty ? patientRepo.patients.first : null));
+
+        if (patient == null) {
+          Widget emptyContent = Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Tasks / कार्य सूची', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkSlate)),
-                  Text('Follow-up Visit #2', style: TextStyle(fontSize: 11, color: AppColors.slateGray)),
+                  Icon(Icons.person_off_outlined, size: 54, color: AppColors.slateGray.withOpacity(0.5)),
+                  const SizedBox(height: 16),
+                  Text(
+                    strings.isHi ? 'कोई लाभार्थी पंजीकृत नहीं है' : (strings.isMr ? 'कोणताही लाभार्थी नोंदणीकृत नाही' : 'No beneficiaries registered'),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    strings.isHi ? 'नया लाभार्थी पंजीकृत करने के बाद फॉलो-अप विवरण यहां दिखाई देगा।' : (strings.isMr ? 'नवीन लाभार्थी नोंदणी केल्यानंतर फॉलो-अप तपशील येथे दिसेल.' : 'Follow-up details will appear here after registering a beneficiary.'),
+                    style: const TextStyle(fontSize: 12, color: AppColors.slateGray),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
-              bottom: const PreferredSize(
-                preferredSize: Size.fromHeight(1),
-                child: Divider(color: AppColors.neutral200, height: 1),
+            ),
+          );
+
+          return widget.isStandalone
+              ? Scaffold(
+                  backgroundColor: RuralCareColors.canvas,
+                  appBar: AppBar(title: Text(strings.isHi ? 'फॉलो-अप' : (strings.isMr ? 'फॉलो-अप' : 'Beneficiary Follow-up'))),
+                  body: emptyContent,
+                )
+              : emptyContent;
+        }
+
+        Widget content = SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // If in Tab Mode, provide horizontal patient quick-switcher
+              if (!widget.isStandalone) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      strings.isHi ? 'फॉलो-अप के लिए लाभार्थी चुनें' : (strings.isMr ? 'फॉलो-अपसाठी लाभार्थी निवडा' : 'Select Beneficiary for Follow-up'),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.slateGray),
+                    ),
+                    Text(
+                      strings.isHi ? '${patientRepo.patients.length} सक्रिय' : (strings.isMr ? '${patientRepo.patients.length} सक्रिय' : '${patientRepo.patients.length} Active'),
+                      style: const TextStyle(fontSize: 10, color: AppColors.forestTeal, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: patientRepo.patients.map((p) {
+                  final isCurrent = p.id == patient.id;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(p.fullName),
+                      labelStyle: TextStyle(
+                        fontSize: 11,
+                        fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                        color: isCurrent ? Colors.white : AppColors.darkSlate,
+                      ),
+                      selected: isCurrent,
+                      selectedColor: AppColors.forestTealDark,
+                      backgroundColor: Colors.white,
+                      onSelected: (sel) {
+                        if (sel) setState(() => _activePatientId = p.id);
+                      },
+                    ),
+                  );
+                }).toList(),
               ),
-            )
-          : null,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+            ),
+            const SizedBox(height: 14),
+          ],
             // 1. Hero Card matching Stitch Screen 4
             Container(
               padding: const EdgeInsets.all(16),
@@ -483,7 +565,42 @@ class _HealthWorkerFollowUpScreenState extends State<HealthWorkerFollowUpScreen>
             const SizedBox(height: 24),
           ],
         ),
-      ),
+      );
+
+        if (widget.isStandalone) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: AppColors.darkSlate),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    strings.tabTasks,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                  ),
+                  Text(
+                    strings.isHi ? 'फॉलो-अप दौरा #2' : (strings.isMr ? 'फॉलो-अप भेट #२' : 'Follow-up Visit #2'),
+                    style: const TextStyle(fontSize: 11, color: AppColors.slateGray),
+                  ),
+                ],
+              ),
+              bottom: const PreferredSize(
+                preferredSize: Size.fromHeight(1),
+                child: Divider(color: AppColors.neutral200, height: 1),
+              ),
+            ),
+            body: content,
+          );
+        }
+
+        return content;
+      },
     );
   }
 

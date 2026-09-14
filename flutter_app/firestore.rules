@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return getUserData().role;
+    }
+
+    function isPatient() {
+      return isAuthenticated() && (getUserRole() == 'patient' || getUserRole() == 'PATIENT');
+    }
+
+    function isHealthWorker() {
+      return isAuthenticated() && (getUserRole() == 'healthWorker' || getUserRole() == 'HEALTH_WORKER' || getUserRole() == 'asha' || getUserRole() == 'ASHA');
+    }
+
+    function isDoctor() {
+      return isAuthenticated() && (getUserRole() == 'doctor' || getUserRole() == 'DOCTOR');
+    }
+
+    function isFacilityStaff() {
+      return isAuthenticated() && (getUserRole() == 'facilityStaff' || getUserRole() == 'FACILITY_STAFF');
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (getUserRole() == 'admin' || getUserRole() == 'ADMIN');
+    }
+
+    // 1. User Profiles & Role Metadata
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isUser(userId) || isAdmin();
+    }
+
+    // 2. Patient Records (Strict Isolation: Patients can ONLY access their own data)
+    match /patients/{patientId} {
+      allow read: if (isPatient() && resource.data.userId == request.auth.uid)
+                  || isHealthWorker()
+                  || isDoctor()
+                  || isAdmin();
+      allow create: if isHealthWorker() || isPatient() || isAdmin();
+      allow update: if (isPatient() && resource.data.userId == request.auth.uid)
+                    || isHealthWorker()
+                    || isDoctor()
+                    || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 3. Appointments & OPD Queues
+    match /appointments/{appointmentId} {
+      allow read: if (isPatient() && resource.data.patientUserId == request.auth.uid)
+                  || isDoctor()
+                  || isHealthWorker()
+                  || isFacilityStaff()
+                  || isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isDoctor()
+                    || isHealthWorker()
+                    || (isPatient() && resource.data.patientUserId == request.auth.uid)
+                    || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 4. Referrals & Cross-Facility Coordination
+    match /referrals/{referralId} {
+      allow read: if (isPatient() && resource.data.patientUserId == request.auth.uid)
+                  || isHealthWorker()
+                  || isDoctor()
+                  || isFacilityStaff()
+                  || isAdmin();
+      allow create: if isHealthWorker() || isDoctor() || isFacilityStaff() || isAdmin();
+      allow update: if isHealthWorker() || isDoctor() || isFacilityStaff() || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 5. Hardware Vitals & Sensor Telemetry
+    match /vitals/{vitalsId} {
+      allow read: if (isPatient() && resource.data.patientUserId == request.auth.uid)
+                  || isHealthWorker()
+                  || isDoctor()
+                  || isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // Live Heartbeat Sensor Stream (IoT / BLE Bridge Node)
+    match /vitals_telemetry/{patientId} {
+      allow read: if (isPatient() && resource.data.userId == request.auth.uid)
+                  || isHealthWorker()
+                  || isDoctor()
+                  || isAdmin();
+      allow write: if isAuthenticated();
+    }
+
+    // 6. E-Prescriptions
+    match /prescriptions/{prescriptionId} {
+      allow read: if (isPatient() && resource.data.patientUserId == request.auth.uid)
+                  || isDoctor()
+                  || isHealthWorker()
+                  || isAdmin();
+      allow create, update: if isDoctor() || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 7. Facilities & Bed Capacity Registry
+    match /facilities/{facilityId} {
+      allow read: if isAuthenticated();
+      allow write: if isFacilityStaff() || isAdmin();
+    }
+
+    // 8. Patient Requests
+    match /patient_requests/{requestId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+  }
+}

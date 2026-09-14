@@ -1,187 +1,533 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/core/theme/demo_role_switcher.dart';
-import 'package:ruralcare/data/repositories/facility_repository.dart';
+import 'package:ruralcare/app/routes.dart';
 
-/// District Administration Screen conforming strictly to DESIGN.md Section 7:
-/// Prioritizes pending approvals and actionable system issues over vanity metrics.
-/// Clean, labeled rows, explicit role management, and calm visual hierarchy.
-class DistrictAnalyticsScreen extends StatelessWidget {
+import 'package:ruralcare/features/admin/widgets/admin_dashboard_tab.dart';
+import 'package:ruralcare/features/admin/widgets/admin_users_tab.dart';
+import 'package:ruralcare/features/admin/widgets/admin_facilities_tab.dart';
+import 'package:ruralcare/features/admin/widgets/admin_system_audit_tab.dart';
+
+/// District Administration Master Console conforming strictly to:
+/// - Stitch Screens: d4584434, e22f160b, 4645b058, fec523c1
+/// - MASTER_SPECIFICATION_RuralCare.md (Sec 14 & 24)
+/// - DESIGN.md (District Admin Profile & Clinical Aesthetics)
+class DistrictAnalyticsScreen extends StatefulWidget {
   const DistrictAnalyticsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final facRepo = FacilityRepository();
+  State<DistrictAnalyticsScreen> createState() => _DistrictAnalyticsScreenState();
+}
 
-    return Scaffold(
-      backgroundColor: RuralCareColors.canvas,
-      appBar: AppBar(
-        backgroundColor: RuralCareColors.surface,
-        elevation: 0,
-        title: const Text('District administration', style: AppTypography.pageTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.swap_horiz_rounded, color: RuralCareColors.textSecondary),
-            tooltip: 'Switch role',
-            onPressed: () => DemoRoleSwitcher.show(context),
-          ),
-        ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(color: RuralCareColors.border, height: 1),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Actionable System Issues Section
-            const Text('Actionable alerts', style: AppTypography.sectionTitle),
-            const SizedBox(height: 12),
-            _buildActionItem(
-              title: 'Low blood inventory (O- negative)',
-              facility: 'Baramati Sub-District Hospital',
-              subtitle: 'Only 2 units remaining in cold storage',
-              badge: 'Critical',
-              isCritical: true,
+class _DistrictAnalyticsScreenState extends State<DistrictAnalyticsScreen> {
+  int _activeTabIndex = 0;
+  final SessionCoordinator _session = SessionCoordinator();
+
+  void _showBroadcastModal() {
+    final titleCtrl = TextEditingController();
+    final msgCtrl = TextEditingController();
+    String priority = 'URGENT';
+    String targetGroup = 'ALL_FACILITIES';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.campaign_rounded, color: Color(0xFF005140)),
+                SizedBox(width: 10),
+                Text('Broadcast Cluster Notice', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
             ),
-            const SizedBox(height: 10),
-            _buildActionItem(
-              title: 'Pending ASHA practitioner credential approval',
-              facility: 'Kashti Sub-Centre Sector 3',
-              subtitle: 'Sunita Gaikwad submitted biometric verification',
-              badge: 'Approval needed',
-              isCritical: false,
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Dispatches real-time broadcast alert to all connected PHCs, CHCs, and ASHA tablets.',
+                    style: TextStyle(fontSize: 12, color: RuralCareColors.textSecondary),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: titleCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Notice Subject *',
+                      hintText: 'e.g. Cold Chain Alert or Heavy Rainfall Protocol',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    value: targetGroup,
+                    decoration: const InputDecoration(
+                      labelText: 'Recipient Scope',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'ALL_FACILITIES', child: Text('All Facilities & Field Units')),
+                      DropdownMenuItem(value: 'HOSPITALS_ONLY', child: Text('Referral Hospitals (SDH / CHC)')),
+                      DropdownMenuItem(value: 'ASHAS_ONLY', child: Text('ASHA & CHO Field Force')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setDialogState(() => targetGroup = val);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    value: priority,
+                    decoration: const InputDecoration(
+                      labelText: 'Priority Level',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'NORMAL', child: Text('Normal Advisory')),
+                      DropdownMenuItem(value: 'URGENT', child: Text('Urgent Clinical Notice')),
+                      DropdownMenuItem(value: 'CRITICAL', child: Text('Critical Emergency Flash (108 Relay)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setDialogState(() => priority = val);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: msgCtrl,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Broadcast Instructions *',
+                      hintText: 'Provide actionable operational guidelines...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
             ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF005140),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  if (titleCtrl.text.trim().isEmpty || msgCtrl.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please enter notice subject and message.')),
+                    );
+                    return;
+                  }
 
-            const SizedBox(height: 24),
-
-            // 2. Facility Network Capacity Overview
-            const Text('Facility capacity registry', style: AppTypography.sectionTitle),
-            const SizedBox(height: 12),
-            ListenableBuilder(
-              listenable: facRepo,
-              builder: (ctx, _) {
-                return Column(
-                  children: facRepo.facilities.map((fac) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: AppDecorations.card(),
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(fac.name, style: AppTypography.cardTitle),
-                              const SizedBox(height: 2),
-                              Text('${fac.typeDisplay} • ${fac.distanceKm} km', style: AppTypography.supporting),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: AppDecorations.statusBadge(background: RuralCareColors.surfaceSubtle),
+                          const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
                             child: Text(
-                              '${fac.availableBeds}/${fac.totalBeds} beds',
-                              style: const TextStyle(
-                                fontFamily: AppTypography.fontFamily,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: RuralCareColors.textPrimary,
-                              ),
+                              'Dispatched: "${titleCtrl.text.trim()}" to $targetGroup ($priority)',
                             ),
                           ),
                         ],
                       ),
-                    );
-                  }).toList(),
+                      backgroundColor: const Color(0xFF005140),
+                    ),
+                  );
+                },
+                child: const Text('Send Broadcast'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _session,
+      builder: (context, _) {
+        final isMr = _session.isMr;
+        final isHi = _session.isHi;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F9FF),
+          drawer: _buildDrawer(isHi, isMr),
+          appBar: _buildTopAppBar(context, isHi, isMr),
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 850;
+
+              if (isWide) {
+                // Persistent Sidebar for Desktop/Tablet Viewports
+                return Row(
+                  children: [
+                    _buildPersistentSidebar(isHi, isMr),
+                    const VerticalDivider(width: 1, color: Color(0xFFE2E8F0)),
+                    Expanded(child: _buildActiveTabContent()),
+                  ],
                 );
-              },
+              } else {
+                // Mobile Viewport with Tab Content + Bottom Segmented Navigation
+                return Column(
+                  children: [
+                    Expanded(child: _buildActiveTabContent()),
+                    _buildMobileBottomNav(isHi, isMr),
+                  ],
+                );
+              }
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  PreferredSizeWidget _buildTopAppBar(BuildContext context, bool isHi, bool isMr) {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      iconTheme: const IconThemeData(color: Color(0xFF005140)),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF005140).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(6),
             ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.admin_panel_settings_rounded, size: 16, color: Color(0xFF005140)),
+                SizedBox(width: 6),
+                Text(
+                  'NABHA RuralCare',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF005140),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: const Text('v2.4 LTS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
+          ),
+          const SizedBox(width: 12),
+          // Live status pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDCFCE7),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.circle, color: Color(0xFF15803D), size: 6),
+                SizedBox(width: 6),
+                Text(
+                  'Operational • Sync Live',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        // Language switcher (EN | हि | म)
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _langButton('en', 'EN', _session.isEnglish),
+              _langButton('hi', 'हि', _session.isHindi),
+              _langButton('mr', 'म', _session.isMarathi),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        // Super Admin Profile Chip
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FF),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: const Row(
+            children: [
+              CircleAvatar(
+                radius: 12,
+                backgroundColor: Color(0xFF005140),
+                child: Text('SA', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+              SizedBox(width: 6),
+              Text('Dr. Sharma', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: RuralCareColors.textPrimary)),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.swap_horiz_rounded, color: RuralCareColors.textSecondary),
+          tooltip: 'Switch Demo Role',
+          onPressed: () => DemoRoleSwitcher.show(context),
+        ),
+        const SizedBox(width: 8),
+      ],
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(1),
+        child: Divider(color: Color(0xFFE2E8F0), height: 1),
+      ),
+    );
+  }
 
-            const SizedBox(height: 24),
+  Widget _langButton(String code, String label, bool isSelected) {
+    return InkWell(
+      onTap: () => _session.switchLanguage(code),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF005140) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : const Color(0xFF475569),
+          ),
+        ),
+      ),
+    );
+  }
 
-            // 3. ABDM Compliance & Audit Ledger
-            const Text('ABDM digital health compliance', style: AppTypography.sectionTitle),
-            const SizedBox(height: 12),
-            Container(
-              decoration: AppDecorations.card(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _auditRow('FHIR Milestone Compliant', '100% verified'),
-                  _auditRow('Baramati SDH Health Facility Registry', 'HFR-413102-ACTIVE'),
-                  _auditRow('Kashti Sub-Centre Registry', 'HFR-413108-ACTIVE'),
-                  _auditRow('Encryption at rest & transit', 'TLS 1.3 / AES-256 GCM'),
-                ],
+  Widget _buildPersistentSidebar(bool isHi, bool isMr) {
+    return Container(
+      width: 250,
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              isMr ? 'प्रशासन मॉड्यूल्स' : (isHi ? 'प्रशासन मॉड्यूल्स' : 'ADMIN NAVIGATION'),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: RuralCareColors.textSecondary,
+                letterSpacing: 0.5,
               ),
             ),
+          ),
+          const SizedBox(height: 12),
+          _sidebarItem(0, isMr ? 'डॅशबोर्ड' : (isHi ? 'डैशबोर्ड' : 'Dashboard'), Icons.dashboard_rounded),
+          _sidebarItem(1, isMr ? 'वापरकर्ते व अधिकार' : (isHi ? 'उपयोगकर्ता एवं रोल' : 'Users & Roles'), Icons.manage_accounts_rounded),
+          _sidebarItem(2, isMr ? 'आरोग्य संस्था' : (isHi ? 'स्वास्थ्य केंद्र' : 'Facilities'), Icons.domain_rounded),
+          _sidebarItem(3, isMr ? 'सिस्टम व ऑडिट' : (isHi ? 'सिस्टम एवं ऑडिट' : 'System & Audit'), Icons.shield_rounded),
+          const Spacer(),
+          // Sidebar footer with cluster node confirmation
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F9FF),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.lock_rounded, size: 14, color: Color(0xFF005140)),
+                    SizedBox(width: 6),
+                    Text('Node Rampur-HQ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Zone 04 • ABDM HFR Connected',
+                  style: TextStyle(fontSize: 10, color: RuralCareColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 32),
+  Widget _sidebarItem(int index, String title, IconData icon) {
+    final isSelected = _activeTabIndex == index;
+    return InkWell(
+      onTap: () => setState(() => _activeTabIndex = index),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF005140) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: isSelected ? Colors.white : const Color(0xFF475569)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: isSelected ? Colors.white : RuralCareColors.textPrimary,
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionItem({
-    required String title,
-    required String facility,
-    required String subtitle,
-    required String badge,
-    required bool isCritical,
-  }) {
-    return Container(
-      decoration: AppDecorations.card(
-        borderColor: isCritical ? RuralCareColors.critical.withOpacity(0.3) : null,
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDrawer(bool isHi, bool isMr) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(title, style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+          const DrawerHeader(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF00382B), Color(0xFF005140)],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: AppDecorations.statusBadge(
-                  background: isCritical ? RuralCareColors.criticalSoft : RuralCareColors.warningSoft,
-                ),
-                child: Text(
-                  badge,
-                  style: TextStyle(
-                    fontFamily: AppTypography.fontFamily,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isCritical ? RuralCareColors.critical : RuralCareColors.warning,
-                  ),
-                ),
-              ),
-            ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(Icons.admin_panel_settings_rounded, color: Colors.white, size: 36),
+                SizedBox(height: 8),
+                Text('NABHA RuralCare Admin', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('Rampur District Cluster HQ', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
           ),
-          const SizedBox(height: 4),
-          Text('$facility • $subtitle', style: AppTypography.supporting),
+          ListTile(
+            leading: const Icon(Icons.dashboard_rounded),
+            title: Text(isMr ? 'डॅशबोर्ड' : (isHi ? 'डैशबोर्ड' : 'Dashboard')),
+            selected: _activeTabIndex == 0,
+            onTap: () {
+              Navigator.pop(context);
+              setState(() => _activeTabIndex = 0);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.manage_accounts_rounded),
+            title: Text(isMr ? 'वापरकर्ते व अधिकार' : (isHi ? 'उपयोगकर्ता एवं रोल' : 'Users & Roles')),
+            selected: _activeTabIndex == 1,
+            onTap: () {
+              Navigator.pop(context);
+              setState(() => _activeTabIndex = 1);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.domain_rounded),
+            title: Text(isMr ? 'आरोग्य संस्था' : (isHi ? 'स्वास्थ्य केंद्र' : 'Facilities')),
+            selected: _activeTabIndex == 2,
+            onTap: () {
+              Navigator.pop(context);
+              setState(() => _activeTabIndex = 2);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.shield_rounded),
+            title: Text(isMr ? 'सिस्टम व ऑडिट' : (isHi ? 'सिस्टम एवं ऑडिट' : 'System & Audit')),
+            selected: _activeTabIndex == 3,
+            onTap: () {
+              Navigator.pop(context);
+              setState(() => _activeTabIndex = 3);
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _auditRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTypography.supporting),
-          Text(value, style: AppTypography.body.copyWith(fontSize: 13, fontWeight: FontWeight.w500)),
+  Widget _buildMobileBottomNav(bool isHi, bool isMr) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _activeTabIndex,
+        onTap: (index) => setState(() => _activeTabIndex = index),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF005140),
+        unselectedItemColor: RuralCareColors.textSecondary,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.dashboard_rounded),
+            label: isMr ? 'डॅशबोर्ड' : (isHi ? 'डैशबोर्ड' : 'Dashboard'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.manage_accounts_rounded),
+            label: isMr ? 'वापरकर्ते' : (isHi ? 'उपयोगकर्ता' : 'Users'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.domain_rounded),
+            label: isMr ? 'संस्था' : (isHi ? 'केंद्र' : 'Facilities'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.shield_rounded),
+            label: isMr ? 'ऑडिट' : (isHi ? 'ऑडिट' : 'Audit'),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _buildActiveTabContent() {
+    switch (_activeTabIndex) {
+      case 0:
+        return AdminDashboardTab(
+          onNavigateTab: (idx) => setState(() => _activeTabIndex = idx),
+          onBroadcastNotice: _showBroadcastModal,
+        );
+      case 1:
+        return const AdminUsersTab();
+      case 2:
+        return const AdminFacilitiesTab();
+      case 3:
+        return const AdminSystemAuditTab();
+      default:
+        return const SizedBox.shrink();
+    }
   }
 }

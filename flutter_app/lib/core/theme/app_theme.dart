@@ -188,6 +188,14 @@ class AppTypography {
     fontWeight: FontWeight.w500,
   );
 
+  static const TextStyle caption = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 12,
+    height: 16 / 12,
+    fontWeight: FontWeight.w400,
+    color: RuralCareColors.textSecondary,
+  );
+
   static const TextStyle measurement = TextStyle(
     fontFamily: fontFamily,
     fontSize: 28,
@@ -309,7 +317,7 @@ class RuralCareTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: RuralCareColors.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(52), // DESIGN.md: min height 52
+          minimumSize: const Size(0, 48), // min height 48, safe for Rows and flex containers
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0), // DESIGN.md: inputs/buttons 12
           ),
@@ -321,7 +329,7 @@ class RuralCareTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: RuralCareColors.primary,
           side: const BorderSide(color: RuralCareColors.inputBorder, width: 1.0),
-          minimumSize: const Size.fromHeight(52), // DESIGN.md: min height 52
+          minimumSize: const Size(0, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
           ),

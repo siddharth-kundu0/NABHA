@@ -44,8 +44,15 @@ class SessionCoordinator extends ChangeNotifier {
   SessionCoordinator._internal();
 
   AppRole _activeRole = AppRole.patient;
-  String _activeLanguage = 'English';
-  bool _hasCompletedOnboarding = true;
+  String _activeLanguage = 'en';
+  bool _hasCompletedOnboarding = false;
+
+  // Authenticated Firebase User Profile
+  String? _currentUserId;
+  String? _currentUserEmail;
+  String? _assignedCatchment;
+  String? _assignedFacilityId;
+  String? _userDisplayName;
 
   // Accessibility & Privacy preferences
   bool _largerText = false;
@@ -53,16 +60,34 @@ class SessionCoordinator extends ChangeNotifier {
   bool _reduceMotion = false;
   bool _shareWithDoctors = true;
   bool _offlineRecordCache = true;
+  bool _isOffline = false;
 
   AppRole get activeRole => _activeRole;
   String get activeLanguage => _activeLanguage;
+  String get currentLanguage => _activeLanguage;
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;
+  bool get isOffline => _isOffline;
+
+  String? get currentUserId => _currentUserId;
+  String? get currentUserEmail => _currentUserEmail;
+  String? get assignedCatchment => _assignedCatchment;
+  String? get assignedFacilityId => _assignedFacilityId;
+  String? get userDisplayName => _userDisplayName;
+  bool get isAuthenticated => _currentUserId != null;
 
   bool get largerText => _largerText;
   bool get highContrast => _highContrast;
   bool get reduceMotion => _reduceMotion;
   bool get shareWithDoctors => _shareWithDoctors;
   bool get offlineRecordCache => _offlineRecordCache;
+
+  bool get isHindi => _activeLanguage == 'hi' || _activeLanguage == 'Hindi' || _activeLanguage == 'हिन्दी' || _activeLanguage == 'हिंदी';
+  bool get isMarathi => _activeLanguage == 'mr' || _activeLanguage == 'Marathi' || _activeLanguage == 'मराठी';
+  bool get isEnglish => !isHindi && !isMarathi;
+  bool get isHi => isHindi;
+  bool get isMr => isMarathi;
+  bool get isEn => isEnglish;
+  String get canonicalLanguageCode => isHindi ? 'hi' : (isMarathi ? 'mr' : 'en');
 
   void switchRole(AppRole role) {
     _activeRole = role;
@@ -71,6 +96,13 @@ class SessionCoordinator extends ChangeNotifier {
 
   void switchLanguage(String lang) {
     _activeLanguage = lang;
+    notifyListeners();
+  }
+
+  void setLanguage(String lang) => switchLanguage(lang);
+
+  void toggleOffline([bool? val]) {
+    _isOffline = val ?? !_isOffline;
     notifyListeners();
   }
 
@@ -105,6 +137,34 @@ class SessionCoordinator extends ChangeNotifier {
   }
 
   void resetToOnboarding() {
+    _hasCompletedOnboarding = false;
+    notifyListeners();
+  }
+
+  void setAuthenticatedUser({
+    required String uid,
+    String? email,
+    required AppRole role,
+    String? displayName,
+    String? catchment,
+    String? facilityId,
+  }) {
+    _currentUserId = uid;
+    _currentUserEmail = email;
+    _activeRole = role;
+    _userDisplayName = displayName;
+    _assignedCatchment = catchment;
+    _assignedFacilityId = facilityId;
+    _hasCompletedOnboarding = true;
+    notifyListeners();
+  }
+
+  void clearAuthenticatedUser() {
+    _currentUserId = null;
+    _currentUserEmail = null;
+    _userDisplayName = null;
+    _assignedCatchment = null;
+    _assignedFacilityId = null;
     _hasCompletedOnboarding = false;
     notifyListeners();
   }

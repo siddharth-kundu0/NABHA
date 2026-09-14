@@ -4,6 +4,7 @@ import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
+import '../utils/patient_strings.dart';
 
 /// Screen 2: Personal Details (V2 Modern)
 /// Exactly reproducing Stitch Screen `0721475508674e9c8de817dfe3143d05`
@@ -17,7 +18,7 @@ class PersonalDetailsScreen extends StatefulWidget {
 }
 
 class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
-  void _openEditBasicDialog(BuildContext context, PatientRepository patientRepo, PatientDto current) {
+  void _openEditBasicDialog(BuildContext context, PatientRepository patientRepo, PatientDto current, PatientStrings strings) {
     final nameCtrl = TextEditingController(text: current.fullName);
     final ageCtrl = TextEditingController(text: current.age.toString());
     String selectedGender = current.gender;
@@ -48,9 +49,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Edit Basic Information',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                        Text(
+                          strings.editBasicInfoTitle,
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
@@ -59,30 +60,69 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const Text('Full Name', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    Text(strings.fullNameLabel, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                     const SizedBox(height: 6),
                     TextField(
                       controller: nameCtrl,
-                      decoration: AppDecorations.input(hintText: 'Enter full name'),
+                      decoration: AppDecorations.input(hintText: strings.fullNameLabel),
                     ),
                     const SizedBox(height: 14),
-                    const Text('Age', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    Text(strings.ageDobLabel, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                     const SizedBox(height: 6),
-                    TextField(
-                      controller: ageCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: AppDecorations.input(hintText: 'Enter age in years'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: ageCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: AppDecorations.input(hintText: strings.ageDobLabel),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: ctx,
+                              initialDate: DateTime(DateTime.now().year - (int.tryParse(ageCtrl.text) ?? current.age), 1, 1),
+                              firstDate: DateTime(1920),
+                              lastDate: DateTime.now(),
+                            );
+                            if (picked != null) {
+                              final now = DateTime.now();
+                              int calculated = now.year - picked.year;
+                              if (now.month < picked.month || (now.month == picked.month && now.day < picked.day)) {
+                                calculated--;
+                              }
+                              setModalState(() {
+                                ageCtrl.text = '$calculated';
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF0A6B56)),
+                          label: const Text('Pick DOB', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 14),
-                    const Text('Gender', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    Text(strings.genderLabel, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                     const SizedBox(height: 8),
                     Row(
-                      children: ['FEMALE', 'MALE', 'OTHER'].map((g) {
+                      children: [
+                        {'code': 'FEMALE', 'label': strings.female},
+                        {'code': 'MALE', 'label': strings.male},
+                        {'code': 'OTHER', 'label': strings.otherGender},
+                      ].map((item) {
+                        final g = item['code']!;
+                        final label = item['label']!;
                         final isSel = selectedGender == g;
                         return Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: ChoiceChip(
-                            label: Text(g),
+                            label: Text(label),
                             selected: isSel,
                             selectedColor: const Color(0xFFE8F5F2),
                             labelStyle: TextStyle(
@@ -120,13 +160,13 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                           }
                           Navigator.of(modalCtx).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Personal details updated successfully'),
-                              backgroundColor: Color(0xFF0A6B56),
+                            SnackBar(
+                              content: Text(strings.detailsUpdatedToast),
+                              backgroundColor: const Color(0xFF0A6B56),
                             ),
                           );
                         },
-                        child: const Text('Update Details', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(strings.updateDetailsBtn, style: const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -140,6 +180,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final patientRepo = PatientRepository();
     final session = SessionCoordinator();
@@ -151,6 +192,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
           (p) => p.id == widget.patient.id,
           orElse: () => widget.patient,
         );
+        final strings = PatientStrings.of(session);
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFC),
@@ -194,7 +236,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                         ),
                         Row(
                           children: [
-                            // Language Pill
+                            // Interactive Language Pill
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
                               decoration: BoxDecoration(
@@ -204,30 +246,39 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Text(
-                                    'EN',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: session.activeLanguage == 'English' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                  InkWell(
+                                    onTap: () => session.switchLanguage('en'),
+                                    child: Text(
+                                      'EN',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: session.isEnglish ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                   const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
-                                  Text(
-                                    'हि',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: session.activeLanguage == 'Hindi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                  InkWell(
+                                    onTap: () => session.switchLanguage('hi'),
+                                    child: Text(
+                                      'हि',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: session.isHindi ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                   const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
-                                  Text(
-                                    'म',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: session.activeLanguage == 'Marathi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                  InkWell(
+                                    onTap: () => session.switchLanguage('mr'),
+                                    child: Text(
+                                      'म',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: session.isMarathi ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -247,14 +298,14 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                                   color: const Color(0xFFDC2626),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.emergency_rounded, color: Colors.white, size: 12),
-                                    SizedBox(width: 4),
+                                    const Icon(Icons.emergency_rounded, color: Colors.white, size: 12),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      'Emergency Help',
-                                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                                      strings.emergencyHelp,
+                                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                                     ),
                                   ],
                                 ),
@@ -277,25 +328,25 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                       InkWell(
                         onTap: () => Navigator.of(context).pop(),
                         borderRadius: BorderRadius.circular(6),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           child: Row(
                             children: [
-                              Icon(Icons.arrow_back, size: 18, color: Color(0xFF475569)),
-                              SizedBox(width: 4),
+                              const Icon(Icons.arrow_back, size: 18, color: Color(0xFF475569)),
+                              const SizedBox(width: 4),
                               Text(
-                                'Back',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
+                                strings.back,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Center(
                           child: Text(
-                            'Personal Details',
-                            style: TextStyle(
+                            strings.personalDetailsItem,
+                            style: const TextStyle(
                               fontFamily: 'Noto Sans',
                               fontSize: 15.5,
                               fontWeight: FontWeight.w700,
@@ -331,18 +382,18 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(Icons.badge_outlined, color: Color(0xFF0A6B56), size: 20),
-                              SizedBox(width: 8),
+                              const Icon(Icons.badge_outlined, color: Color(0xFF0A6B56), size: 20),
+                              const SizedBox(width: 8),
                               Text(
-                                'Basic Information',
-                                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                strings.basicInfoTitle,
+                                style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                               ),
                             ],
                           ),
                           InkWell(
-                            onTap: () => _openEditBasicDialog(context, patientRepo, currentPatient),
+                            onTap: () => _openEditBasicDialog(context, patientRepo, currentPatient, strings),
                             borderRadius: BorderRadius.circular(8),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
@@ -350,13 +401,13 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                                 color: const Color(0xFFE8F5F2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Row(
+                              child: Row(
                                 children: [
-                                  Icon(Icons.edit_outlined, size: 13, color: Color(0xFF0A6B56)),
-                                  SizedBox(width: 4),
+                                  const Icon(Icons.edit_outlined, size: 13, color: Color(0xFF0A6B56)),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    'Edit',
-                                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF0A6B56)),
+                                    strings.edit,
+                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF0A6B56)),
                                   ),
                                 ],
                               ),
@@ -365,26 +416,26 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                         ],
                       ),
                       const SizedBox(height: 14),
-                      _buildField('Full Name', currentPatient.fullName),
+                      _buildField(strings.fullNameLabel, currentPatient.fullName),
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Expanded(child: _buildField('Registered Mobile', currentPatient.mobileNumber)),
+                          Expanded(child: _buildField(strings.registeredMobileLabel, currentPatient.mobileNumber)),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: const Color(0xFFDCFCE7),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
-                                Icon(Icons.check_circle, size: 12, color: Color(0xFF15803D)),
-                                SizedBox(width: 4),
+                                const Icon(Icons.check_circle, size: 12, color: Color(0xFF15803D)),
+                                const SizedBox(width: 4),
                                 Text(
-                                  'Verified',
-                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
+                                  strings.verified,
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
                                 ),
                               ],
                             ),
@@ -394,8 +445,8 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Expanded(child: _buildField('Age / DOB', '${currentPatient.age} years (15 Aug 1982)')),
-                          Expanded(child: _buildField('Gender', currentPatient.gender == 'FEMALE' ? 'Female' : 'Male')),
+                          Expanded(child: _buildField(strings.ageDobLabel, '${currentPatient.age} years (15 Aug 1982)')),
+                          Expanded(child: _buildField(strings.genderLabel, currentPatient.gender == 'FEMALE' ? strings.female : strings.male)),
                         ],
                       ),
                     ],
@@ -415,28 +466,28 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.location_on_outlined, color: Color(0xFF0A6B56), size: 20),
-                          SizedBox(width: 8),
+                          const Icon(Icons.location_on_outlined, color: Color(0xFF0A6B56), size: 20),
+                          const SizedBox(width: 8),
                           Text(
-                            'Residential Location',
-                            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                            strings.addressLocationTitle,
+                            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                           ),
                         ],
                       ),
                       const SizedBox(height: 14),
                       Row(
                         children: [
-                          Expanded(child: _buildField('State', 'Maharashtra')),
-                          Expanded(child: _buildField('District', currentPatient.district)),
+                          Expanded(child: _buildField(session.isHindi ? 'राज्य' : (session.isMarathi ? 'राज्य' : 'State'), 'Maharashtra')),
+                          Expanded(child: _buildField(strings.districtLabel, currentPatient.district)),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Expanded(child: _buildField('Sub-District / Block', 'Baramati')),
-                          Expanded(child: _buildField('Village / Local Area', currentPatient.village)),
+                          Expanded(child: _buildField(strings.talukaLabel, 'Baramati')),
+                          Expanded(child: _buildField(strings.villageLabel, currentPatient.village)),
                         ],
                       ),
                     ],
@@ -456,13 +507,13 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.local_hospital_outlined, color: Color(0xFF0A6B56), size: 20),
-                          SizedBox(width: 8),
+                          const Icon(Icons.local_hospital_outlined, color: Color(0xFF0A6B56), size: 20),
+                          const SizedBox(width: 8),
                           Text(
-                            'Assigned Care Center',
-                            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                            session.isHindi ? 'संबद्ध स्वास्थ्य केंद्र' : (session.isMarathi ? 'संलग्न आरोग्य केंद्र' : 'Assigned Care Center'),
+                            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                           ),
                         ],
                       ),
@@ -491,16 +542,16 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Row(
+                                  Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
+                                      const Text(
                                         'Kashti PHC',
                                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                                       ),
                                       Text(
-                                        'Primary Facility',
-                                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        session.isHindi ? 'प्राथमिक केंद्र' : (session.isMarathi ? 'प्राथमिक केंद्र' : 'Primary Facility'),
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                                       ),
                                     ],
                                   ),
@@ -510,13 +561,15 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                                     style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                                   ),
                                   const SizedBox(height: 6),
-                                  const Row(
+                                  Row(
                                     children: [
-                                      Icon(Icons.near_me_outlined, size: 14, color: Color(0xFF0A6B56)),
-                                      SizedBox(width: 4),
+                                      const Icon(Icons.near_me_outlined, size: 14, color: Color(0xFF0A6B56)),
+                                      const SizedBox(width: 4),
                                       Text(
-                                        '1.8 km from residential village',
-                                        style: TextStyle(
+                                        session.isHindi
+                                            ? 'गांव से 1.8 किमी दूर'
+                                            : (session.isMarathi ? 'गावापासून १.८ किमी' : '1.8 km from residential village'),
+                                        style: const TextStyle(
                                           fontSize: 11.5,
                                           fontWeight: FontWeight.w600,
                                           color: Color(0xFF0A6B56),
@@ -548,20 +601,25 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                       elevation: 0,
                     ),
                     onPressed: () {
+                      final msg = session.isHindi
+                          ? 'सभी व्यक्तिगत विवरण पुष्ट और सुरक्षित रूप से सिंक किए गए हैं'
+                          : (session.isMarathi
+                              ? 'सर्व वैयक्तिक तपशील निश्चित आणि सुरक्षितपणे सिंक केले आहेत'
+                              : 'All personal details are confirmed and securely synced');
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('All personal details are confirmed and securely synced'),
-                          backgroundColor: Color(0xFF0A6B56),
+                        SnackBar(
+                          content: Text(msg),
+                          backgroundColor: const Color(0xFF0A6B56),
                         ),
                       );
                       Navigator.of(context).pop();
                     },
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check, size: 18),
-                        SizedBox(width: 6),
-                        Text('Save Changes', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                        const Icon(Icons.check, size: 18),
+                        const SizedBox(width: 6),
+                        Text(strings.save, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                       ],
                     ),
                   ),
@@ -573,9 +631,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w500),
+                    child: Text(
+                      strings.cancel,
+                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ),

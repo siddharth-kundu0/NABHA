@@ -55,6 +55,21 @@ class EmergencyRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  void triggerSosEvent(EmergencyEventDto event) {
+    _activeEvent = event;
+    if (_cache.isOffline) {
+      _cache.queueMutation('EMERGENCY', 'TRIGGER', _activeEvent!.toJson());
+    } else {
+      try {
+        FirebaseFirestore.instance
+            .collection('emergency_events')
+            .doc(_activeEvent!.id)
+            .set(_activeEvent!.toJson());
+      } catch (_) {}
+    }
+    notifyListeners();
+  }
+
   void resolveEmergency() {
     if (_activeEvent != null) {
       _activeEvent = EmergencyEventDto(

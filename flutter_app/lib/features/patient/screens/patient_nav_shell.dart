@@ -2,31 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'patient_home_screen.dart';
+import 'symptom_checker_screen.dart';
 import 'appointment_booking_screen.dart';
 import 'longitudinal_records_screen.dart';
-import 'referral_tracker_screen.dart';
 import 'patient_profile_screen.dart';
 
 /// Fixed 5-tab navigation shell for the Patient role adhering strictly to DESIGN.md Section 4:
-/// Home | Appointments | Records | Referrals | Profile
+/// Home | Symptom Checker | Appointments | Records | Profile
 /// Selected item uses blue text/icon and a small pale-blue selection background.
 class PatientNavShell extends StatefulWidget {
-  const PatientNavShell({super.key});
+  final int initialIndex;
+
+  const PatientNavShell({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   State<PatientNavShell> createState() => _PatientNavShellState();
 }
 
 class _PatientNavShellState extends State<PatientNavShell> {
-  int _currentIndex = 0;
+  late int _currentIndex;
 
   final List<Widget> _pages = const [
     PatientHomeScreen(),
+    SymptomCheckerScreen(),
     AppointmentBookingScreen(),
     LongitudinalRecordsScreen(),
-    ReferralTrackerScreen(),
     PatientProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +46,13 @@ class _PatientNavShellState extends State<PatientNavShell> {
     return ListenableBuilder(
       listenable: session,
       builder: (context, _) {
-        final lang = session.activeLanguage;
-        final isHi = lang == 'Hindi';
-        final isMr = lang == 'Marathi';
+        final isHi = session.isHindi;
+        final isMr = session.isMarathi;
 
         final homeLabel = isHi ? 'मुख्य पृष्ठ' : (isMr ? 'मुख्य पृष्ठ' : 'Home');
+        final symptomLabel = isHi ? 'लक्षण जाँच' : (isMr ? 'लक्षण तपासणी' : 'Symptom Checker');
         final aptLabel = isHi ? 'अपॉइंटमेंट' : (isMr ? 'अपॉइंटमेंट' : 'Appointments');
         final recLabel = isHi ? 'रिकॉर्ड' : (isMr ? 'नोंदी' : 'Records');
-        final refLabel = isHi ? 'रेफरल' : (isMr ? 'संदर्भ' : 'Referrals');
         final profLabel = isHi ? 'प्रोफ़ाइल' : (isMr ? 'प्रोफाइल' : 'Profile');
 
         return Scaffold(
@@ -78,6 +88,11 @@ class _PatientNavShellState extends State<PatientNavShell> {
                   label: homeLabel,
                 ),
                 NavigationDestination(
+                  icon: const Icon(Icons.accessibility_new_outlined, color: RuralCareColors.textSecondary, size: 24),
+                  selectedIcon: const Icon(Icons.accessibility_new_rounded, color: RuralCareColors.primary, size: 24),
+                  label: symptomLabel,
+                ),
+                NavigationDestination(
                   icon: const Icon(Icons.calendar_today_outlined, color: RuralCareColors.textSecondary, size: 24),
                   selectedIcon: const Icon(Icons.calendar_today, color: RuralCareColors.primary, size: 24),
                   label: aptLabel,
@@ -86,11 +101,6 @@ class _PatientNavShellState extends State<PatientNavShell> {
                   icon: const Icon(Icons.folder_shared_outlined, color: RuralCareColors.textSecondary, size: 24),
                   selectedIcon: const Icon(Icons.folder_shared, color: RuralCareColors.primary, size: 24),
                   label: recLabel,
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.alt_route_outlined, color: RuralCareColors.textSecondary, size: 24),
-                  selectedIcon: const Icon(Icons.alt_route, color: RuralCareColors.primary, size: 24),
-                  label: refLabel,
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.person_outline, color: RuralCareColors.textSecondary, size: 24),

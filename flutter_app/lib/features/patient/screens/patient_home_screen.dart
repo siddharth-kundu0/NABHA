@@ -9,14 +9,21 @@ import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/models/vitals_dto.dart';
 import 'package:ruralcare/data/models/appointment_dto.dart';
 import 'package:ruralcare/data/models/referral_dto.dart';
+import 'my_medications_screen.dart';
+import 'package:ruralcare/features/auth/screens/patient_registration_screen.dart';
 import 'medicine_availability_screen.dart';
 import 'diagnostic_locator_screen.dart';
 import 'referral_tracker_screen.dart';
 import 'appointment_booking_screen.dart';
 import 'longitudinal_records_screen.dart';
+import 'symptom_checker_screen.dart';
 import 'package:ruralcare/features/teleconsult/screens/live_teleconsult_room_screen.dart';
+import 'package:ruralcare/features/teleconsult/screens/teleconsultation_landing_screen.dart';
 import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
-import 'package:ruralcare/features/facility/screens/facility_operations_screen.dart';
+import 'package:ruralcare/features/patient/screens/find_facility_screen.dart';
+import 'package:ruralcare/data/repositories/notification_repository.dart';
+import 'package:ruralcare/features/notifications/screens/notification_center_screen.dart';
+import '../utils/patient_strings.dart';
 
 /// Patient Home Screen conforming strictly to DESIGN.md Section 6:
 /// A quiet care companion with generous breathing room, white surface cards (radius 16, border #DCE4ED, no shadows),
@@ -40,11 +47,20 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     return ListenableBuilder(
       listenable: Listenable.merge([patientRepo, aptRepo, refRepo, cache, session]),
       builder: (context, _) {
-        final patient = patientRepo.defaultPatient;
+        final patient = patientRepo.activePatient;
+        final strings = PatientStrings.of(session);
+
+        if (patient == null) {
+          return _buildNoPatientState(context, session, strings);
+        }
+
         final vitals = patient.latestVitals;
-        final upcomingApt = aptRepo.appointments.isNotEmpty ? aptRepo.appointments.first : null;
-        final activeRef = refRepo.referrals.isNotEmpty ? refRepo.referrals.first : null;
-        final lang = session.activeLanguage;
+        final upcomingApt = aptRepo.appointments.where((a) => a.patientId == patient.id && a.status != 'COMPLETED' && a.status != 'CANCELLED').isNotEmpty
+            ? aptRepo.appointments.firstWhere((a) => a.patientId == patient.id && a.status != 'COMPLETED' && a.status != 'CANCELLED')
+            : null;
+        final activeRef = refRepo.referrals.where((r) => r.patientId == patient.id && r.status != 'CLOSED').isNotEmpty
+            ? refRepo.referrals.firstWhere((r) => r.patientId == patient.id && r.status != 'CLOSED')
+            : null;
 
         return Scaffold(
           backgroundColor: RuralCareColors.canvas,
@@ -52,7 +68,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             child: Column(
               children: [
                 // 1. Compact Header: Greeting, Healthcare area, Language shortcut & Notifications
-                _buildCompactHeader(context, patient, session),
+                _buildCompactHeader(context, patient, session, strings),
 
                 // Main Scrollable Area
                 Expanded(
@@ -62,43 +78,43 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // 2. Next Care Card (Single primary action per section)
-                        _buildNextCareCard(context, patient, upcomingApt, lang),
+                        _buildNextCareCard(context, patient, upcomingApt, session, strings),
 
                         const SizedBox(height: 24),
 
                         // 3. Quick Actions: "How can we help?"
                         Text(
-                          lang == 'Hindi' ? 'हम आपकी कैसे मदद कर सकते हैं?' : (lang == 'Marathi' ? 'आम्ही कशी मदत करू शकतो?' : 'How can we help?'),
+                          strings.howCanWeHelp,
                           style: AppTypography.sectionTitle,
                         ),
                         const SizedBox(height: 12),
-                        _buildQuickActionsGrid(context, lang),
+                        _buildQuickActionsGrid(context, session, strings),
 
                         const SizedBox(height: 24),
 
                         // 4. Active Referral Tracker (if active and not duplicating Next Care)
                         if (activeRef != null && activeRef.status != 'CLOSED') ...[
-                          _buildActiveReferralSection(context, activeRef, lang),
+                          _buildActiveReferralSection(context, activeRef, session, strings),
                           const SizedBox(height: 24),
                         ],
 
                         // 5. Your Health Snapshot: Recent vitals & consultations
                         Text(
-                          lang == 'Hindi' ? 'आपकी स्वास्थ्य स्थिति' : (lang == 'Marathi' ? 'तुमचे आरोग्य' : 'Your health'),
+                          strings.yourHealthSnapshot,
                           style: AppTypography.sectionTitle,
                         ),
                         const SizedBox(height: 12),
-                        _buildHealthSnapshotCard(context, patient, vitals, lang),
+                        _buildHealthSnapshotCard(context, patient, vitals, session, strings),
 
                         const SizedBox(height: 24),
 
                         // 6. Assigned Frontline Care Network
-                        _buildAssignedCareRow(context, patient.assignedAsha, lang),
+                        _buildAssignedCareRow(context, patient.assignedAsha, session, strings),
 
                         const SizedBox(height: 24),
 
                         // 7. Visible, Restrained Emergency Help Action (DESIGN.md Section 6)
-                        _buildEmergencyAction(context, lang),
+                        _buildEmergencyAction(context, session, strings),
 
                         const SizedBox(height: 32),
                       ],
@@ -115,16 +131,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   /// Compact header per DESIGN.md Section 4 & 6:
   /// Greeting, healthcare area, notification access, and discreet language selector.
-  Widget _buildCompactHeader(BuildContext context, PatientDto patient, SessionCoordinator session) {
-    final lang = session.activeLanguage;
-    String greeting;
-    if (lang == 'Hindi') {
-      greeting = 'नमस्ते, ${patient.fullName}';
-    } else if (lang == 'Marathi') {
-      greeting = 'नमस्कार, ${patient.fullName}';
-    } else {
-      greeting = 'Good morning, ${patient.fullName}';
-    }
+  Widget _buildCompactHeader(BuildContext context, PatientDto patient, SessionCoordinator session, PatientStrings strings) {
+    final greeting = strings.greeting(patient.fullName);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
@@ -183,31 +191,50 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _langItem('EN', session, isSelected: lang == 'English', target: 'English'),
+                    _langItem('EN', session, isSelected: session.isEnglish, target: 'en'),
                     const Text('·', style: TextStyle(color: RuralCareColors.textSecondary, fontSize: 12)),
-                    _langItem('हिन्दी', session, isSelected: lang == 'Hindi', target: 'Hindi'),
+                    _langItem('हिन्दी', session, isSelected: session.isHindi, target: 'hi'),
                     const Text('·', style: TextStyle(color: RuralCareColors.textSecondary, fontSize: 12)),
-                    _langItem('मराठी', session, isSelected: lang == 'Marathi', target: 'Marathi'),
+                    _langItem('मराठी', session, isSelected: session.isMarathi, target: 'mr'),
                   ],
                 ),
               ),
               const SizedBox(width: 10),
-              IconButton(
-                icon: const Icon(Icons.notifications_none_rounded, color: RuralCareColors.textPrimary, size: 24),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        lang == 'Hindi'
-                            ? 'सभी रिकॉर्ड सुरक्षित और सिंक हैं।'
-                            : (lang == 'Marathi'
-                                ? 'सर्व नोंदी सुरक्षित आणि सिंक आहेत.'
-                                : 'All records are saved and synced.'),
+              ListenableBuilder(
+                listenable: NotificationRepository(),
+                builder: (context, _) {
+                  final unread = NotificationRepository().getUnreadCount(AppRole.patient);
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_none_rounded, color: RuralCareColors.textPrimary, size: 24),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const NotificationCenterScreen()),
+                          );
+                        },
+                        tooltip: 'Notifications',
                       ),
-                    ),
+                      if (unread > 0)
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF0A6B56),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '$unread',
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
                   );
                 },
-                tooltip: 'Notifications',
               ),
             ],
           ),
@@ -244,24 +271,61 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   /// Next Care Card per DESIGN.md Section 6:
   /// The most relevant appointment or follow-up with one clear action.
   /// White fill, 1px border (#DCE4ED), radius 16, no shadow.
-  Widget _buildNextCareCard(BuildContext context, PatientDto patient, AppointmentDto? upcomingApt, String lang) {
+  Widget _buildNextCareCard(BuildContext context, PatientDto patient, AppointmentDto? upcomingApt, SessionCoordinator session, PatientStrings strings) {
     final hasApt = upcomingApt != null;
+    final cardHeading = strings.nextCareHeading;
 
-    final cardHeading = lang == 'Hindi'
-        ? 'आपकी अगली अपॉइंटमेंट'
-        : (lang == 'Marathi' ? 'तुमची पुढची अपॉइंटमेंट' : 'Your next appointment');
+    if (!hasApt) {
+      return Container(
+        width: double.infinity,
+        decoration: AppDecorations.card(),
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              cardHeading,
+              style: AppTypography.supporting.copyWith(
+                fontWeight: FontWeight.w600,
+                color: RuralCareColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              strings.noUpcomingApts,
+              style: AppTypography.cardTitle,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              strings.noUpcomingAptsSub,
+              style: AppTypography.supporting,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (ctx) => const AppointmentBookingScreen()),
+                  );
+                },
+                icon: const Icon(Icons.add_rounded, size: 20),
+                label: Text(strings.bookAppointment, style: AppTypography.button),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: RuralCareColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-    final clinicianText = hasApt
-        ? upcomingApt.doctorName
-        : (lang == 'Hindi' ? 'डॉ. अंजलि देशमुख (स्त्री रोग विशेषज्ञ)' : (lang == 'Marathi' ? 'डॉ. अंजली देशमुख (स्त्रीरोग तज्ज्ञ)' : 'Dr. Anjali Deshmukh (OB/GYN)'));
-
-    final detailsText = hasApt
-        ? '${upcomingApt.appointmentTime} • ${upcomingApt.facilityName}'
-        : (lang == 'Hindi' ? '14 सितंबर • 10:30 AM • बारामती उप-जिला अस्पताल' : (lang == 'Marathi' ? '१४ सप्टेंबर • १०:३० AM • बारामती उपजिल्हा रुग्णालय' : '14 Sep • 10:30 AM • Baramati Sub-District Hospital'));
-
-    final actionLabel = lang == 'Hindi'
-        ? 'अपॉइंटमेंट विवरण देखें'
-        : (lang == 'Marathi' ? 'तपशील पहा' : 'View appointment');
+    final isTeleconsult = upcomingApt.type == 'TELECONSULTATION';
 
     return Container(
       width: double.infinity,
@@ -286,7 +350,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                   background: RuralCareColors.primarySoft,
                 ),
                 child: Text(
-                  lang == 'Hindi' ? 'पुष्टि' : (lang == 'Marathi' ? 'पुष्टी' : 'Confirmed'),
+                  strings.confirmed,
                   style: const TextStyle(
                     fontFamily: AppTypography.fontFamily,
                     fontSize: 11,
@@ -299,12 +363,12 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            clinicianText,
+            upcomingApt.doctorName,
             style: AppTypography.cardTitle,
           ),
           const SizedBox(height: 4),
           Text(
-            detailsText,
+            '${upcomingApt.appointmentTime} • ${upcomingApt.facilityName}',
             style: AppTypography.supporting,
           ),
           const SizedBox(height: 16),
@@ -313,15 +377,22 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             height: 52,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (ctx) => LiveTeleconsultRoomScreen(
-                      patientName: patient.fullName,
-                      doctorName: clinicianText,
-                      specialty: hasApt ? upcomingApt.specialty : 'Obstetrics & Gynaecology',
+                if (isTeleconsult) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (ctx) => LiveTeleconsultRoomScreen(
+                        patientName: patient.fullName,
+                        doctorName: upcomingApt.doctorName,
+                        specialty: upcomingApt.specialty,
+                        appointmentId: upcomingApt.id,
+                      ),
                     ),
-                  ),
-                );
+                  );
+                } else {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (ctx) => const AppointmentBookingScreen()),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: RuralCareColors.primary,
@@ -329,7 +400,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: Text(actionLabel, style: AppTypography.button),
+              child: Text(
+                isTeleconsult ? strings.joinTeleconsult : strings.viewArrivalPass,
+                style: AppTypography.button,
+              ),
             ),
           ),
         ],
@@ -337,22 +411,85 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
-  /// Quick Actions: 2-column arrangement + full-width Diagnostics row (DESIGN.md Section 6)
-  Widget _buildQuickActionsGrid(BuildContext context, String lang) {
-    final isHi = lang == 'Hindi';
-    final isMr = lang == 'Marathi';
-
+  /// Quick Actions: Prominent Symptom Checker + 2-column arrangement + full-width Diagnostics row (DESIGN.md Section 6)
+  Widget _buildQuickActionsGrid(BuildContext context, SessionCoordinator session, PatientStrings strings) {
     return Column(
       children: [
+        // 1. Prominent Hero Symptom Checker Quick Action
+        InkWell(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (ctx) => const SymptomCheckerScreen(isModal: true)),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  RuralCareColors.primary.withOpacity(0.08),
+                  RuralCareColors.teal.withOpacity(0.06),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: RuralCareColors.primary.withOpacity(0.3), width: 1.2),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: RuralCareColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.accessibility_new_rounded, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        strings.symptomChecker,
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: RuralCareColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        strings.symptomCheckerSub,
+                        style: const TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 11,
+                          color: RuralCareColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: RuralCareColors.primary),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: _quickActionTile(
-                icon: Icons.calendar_today_outlined,
-                title: isHi ? 'अपॉइंटमेंट बुक करें' : (isMr ? 'अपॉइंटमेंट बुक करा' : 'Book appointment'),
+                icon: Icons.medication_outlined,
+                title: strings.myMedications,
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (ctx) => const AppointmentBookingScreen()),
+                    MaterialPageRoute(builder: (ctx) => const MyMedicationsScreen()),
                   );
                 },
               ),
@@ -361,16 +498,11 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             Expanded(
               child: _quickActionTile(
                 icon: Icons.video_call_outlined,
-                title: isHi ? 'टेलीकंसल्टेशन' : (isMr ? 'टेलीसल्ला' : 'Teleconsultation'),
+                title: strings.teleconsultation,
                 onTap: () {
-                  final patient = PatientRepository().defaultPatient;
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (ctx) => LiveTeleconsultRoomScreen(
-                        patientName: patient.fullName,
-                        doctorName: 'Dr. Anjali Deshmukh',
-                        specialty: 'Obstetrics & Gynaecology',
-                      ),
+                      builder: (ctx) => const TeleconsultationLandingScreen(),
                     ),
                   );
                 },
@@ -384,10 +516,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             Expanded(
               child: _quickActionTile(
                 icon: Icons.local_hospital_outlined,
-                title: isHi ? 'अस्पताल खोजें' : (isMr ? 'रुग्णालय शोधा' : 'Find facility'),
+                title: strings.findFacility,
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (ctx) => const FacilityOperationsScreen()),
+                    MaterialPageRoute(builder: (ctx) => const FindFacilityScreen()),
                   );
                 },
               ),
@@ -395,8 +527,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _quickActionTile(
-                icon: Icons.medication_outlined,
-                title: isHi ? 'दवाइयां' : (isMr ? 'औषधे' : 'Medicines'),
+                icon: Icons.local_pharmacy_outlined,
+                title: strings.medicines,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (ctx) => const MedicineAvailabilityScreen()),
@@ -410,7 +542,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         // Full width row for Diagnostics
         _quickActionTile(
           icon: Icons.biotech_outlined,
-          title: isHi ? 'निदान जांच' : (isMr ? 'निदान चाचण्या' : 'Diagnostics & lab tests'),
+          title: strings.diagnostics,
           fullWidth: true,
           onTap: () {
             Navigator.of(context).push(
@@ -455,9 +587,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   /// Active Referral Tracker Section (Quiet, purposeful)
-  Widget _buildActiveReferralSection(BuildContext context, ReferralDto referral, String lang) {
-    final refTitle = lang == 'Hindi' ? 'सक्रिय रेफरल' : (lang == 'Marathi' ? 'सक्रिय संदर्भ' : 'Active referral');
-    final viewBtn = lang == 'Hindi' ? 'देखें' : (lang == 'Marathi' ? 'पहा' : 'View referral');
+  Widget _buildActiveReferralSection(BuildContext context, ReferralDto referral, SessionCoordinator session, PatientStrings strings) {
+    final refTitle = strings.activeReferral;
+    final viewBtn = strings.viewReferral;
+    final statusText = strings.localizeReferralStatus(referral.status);
 
     return Container(
       decoration: AppDecorations.card(),
@@ -476,7 +609,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: AppDecorations.statusBadge(background: RuralCareColors.warningSoft),
                 child: Text(
-                  referral.statusDisplay,
+                  statusText,
                   style: const TextStyle(
                     fontFamily: AppTypography.fontFamily,
                     fontSize: 11,
@@ -512,9 +645,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   /// Health Snapshot Card per DESIGN.md Section 6:
   /// Recent consultation and latest prescription/report as quiet rows.
-  Widget _buildHealthSnapshotCard(BuildContext context, PatientDto patient, VitalsDto? vitals, String lang) {
-    final isHi = lang == 'Hindi';
-    final isMr = lang == 'Marathi';
+  Widget _buildHealthSnapshotCard(BuildContext context, PatientDto patient, VitalsDto? vitals, SessionCoordinator session, PatientStrings strings) {
+    final aptRepo = AppointmentRepository();
+    final completedApts = aptRepo.appointments.where((a) => a.patientId == patient.id && a.status == 'COMPLETED').toList();
+    final prescriptions = aptRepo.getPrescriptionsForPatient(patient.id);
 
     return Container(
       decoration: AppDecorations.card(),
@@ -533,22 +667,26 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isHi ? 'हालिया परामर्श' : (isMr ? 'नुकतीच झालेली सल्लामसलत' : 'Recent consultation'),
-                        style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        '12 Aug • Dr. Deshmukh • Baramati SDH',
-                        style: AppTypography.supporting,
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          strings.recentConsultation,
+                          style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          completedApts.isNotEmpty
+                              ? '${completedApts.first.appointmentTime} • ${completedApts.first.doctorName}'
+                              : (session.isHindi ? 'कोई हालिया परामर्श नहीं' : (session.isMarathi ? 'कोणतीही अलिकडील भेट नाही' : 'No recent consultations recorded')),
+                          style: AppTypography.supporting,
+                        ),
+                      ],
+                    ),
                   ),
                   Text(
-                    isHi ? 'देखें' : (isMr ? 'पहा' : 'View'),
+                    strings.view,
                     style: AppTypography.supporting.copyWith(
                       color: RuralCareColors.primary,
                       fontWeight: FontWeight.w600,
@@ -561,35 +699,37 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           const Divider(color: RuralCareColors.border, height: 20),
 
           // Row 2: Latest vitals
-          if (vitals != null) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isHi ? 'नवीनतम स्वास्थ्य रीडिंग' : (isMr ? 'नवीनतम नोंदी' : 'Latest health readings'),
+                        strings.latestHealthReadings,
                         style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'BP ${vitals.systolicBp}/${vitals.diastolicBp} mmHg • SpO2 ${vitals.spO2}%',
+                        vitals != null
+                            ? 'BP ${vitals.systolicBp}/${vitals.diastolicBp} mmHg • SpO2 ${vitals.spO2}%'
+                            : (session.isHindi ? 'कोई वाइटल्स दर्ज नहीं' : (session.isMarathi ? 'कोणतीही नोंद उपलब्ध नाही' : 'No vitals recorded yet')),
                         style: AppTypography.supporting,
                       ),
                     ],
                   ),
+                ),
+                if (vitals != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: AppDecorations.statusBadge(
                       background: vitals.hasWarning ? RuralCareColors.warningSoft : RuralCareColors.successSoft,
                     ),
                     child: Text(
-                      vitals.hasWarning
-                          ? (isHi ? 'जांच आवश्यक' : (isMr ? 'तपासणी आवश्यक' : 'Review needed'))
-                          : (isHi ? 'सामान्य' : (isMr ? 'सामान्य' : 'Normal')),
+                      vitals.hasWarning ? strings.reviewNeeded : strings.normal,
                       style: TextStyle(
                         fontFamily: AppTypography.fontFamily,
                         fontSize: 11,
@@ -598,17 +738,16 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                       ),
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
-            const Divider(color: RuralCareColors.border, height: 20),
-          ],
+          ),
+          const Divider(color: RuralCareColors.border, height: 20),
 
           // Row 3: Latest prescription
           InkWell(
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (ctx) => const LongitudinalRecordsScreen()),
+                MaterialPageRoute(builder: (ctx) => const MyMedicationsScreen()),
               );
             },
             child: Padding(
@@ -616,22 +755,26 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isHi ? 'नवीनतम नुस्खा' : (isMr ? 'नवीनतम औषधोपचार' : 'Latest prescription'),
-                        style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Iron & Folic Acid, Labetalol 100mg',
-                        style: AppTypography.supporting,
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          strings.latestPrescription,
+                          style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          prescriptions.isNotEmpty && prescriptions.first.medicines.isNotEmpty
+                              ? '${prescriptions.first.medicines.first.medicineName} (${prescriptions.first.medicines.first.frequency})'
+                              : strings.noActiveMedications,
+                          style: AppTypography.supporting,
+                        ),
+                      ],
+                    ),
                   ),
                   Text(
-                    isHi ? 'देखें' : (isMr ? 'पहा' : 'View'),
+                    strings.view,
                     style: AppTypography.supporting.copyWith(
                       color: RuralCareColors.primary,
                       fontWeight: FontWeight.w600,
@@ -646,11 +789,103 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
-  /// Assigned ASHA Community Health Worker row
-  Widget _buildAssignedCareRow(BuildContext context, String ashaName, String lang) {
-    final isHi = lang == 'Hindi';
-    final isMr = lang == 'Marathi';
+  Widget _buildNoPatientState(BuildContext context, SessionCoordinator session, PatientStrings strings) {
+    return Scaffold(
+      backgroundColor: RuralCareColors.canvas,
+      appBar: AppBar(
+        backgroundColor: RuralCareColors.surface,
+        elevation: 0,
+        title: Text(strings.appTitle, style: AppTypography.pageTitle),
+        actions: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: RuralCareColors.surfaceSubtle,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: RuralCareColors.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _langItem('EN', session, isSelected: session.isEnglish, target: 'en'),
+                const Text(' • ', style: TextStyle(fontSize: 10, color: RuralCareColors.textSecondary)),
+                _langItem('हिं', session, isSelected: session.isHindi, target: 'hi'),
+                const Text(' • ', style: TextStyle(fontSize: 10, color: RuralCareColors.textSecondary)),
+                _langItem('म', session, isSelected: session.isMarathi, target: 'mr'),
+              ],
+            ),
+          ),
+        ],
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: const BoxDecoration(
+                  color: RuralCareColors.primarySoft,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person_add_alt_1_outlined, color: RuralCareColors.primary, size: 36),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                session.isHindi
+                    ? 'कोई मरीज प्रोफ़ाइल पंजीकृत नहीं है'
+                    : (session.isMarathi ? 'कोणतीही रुग्ण प्रोफाइल नोंदणीकृत नाही' : 'No Patient Profile Registered'),
+                style: AppTypography.pageTitle,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                session.isHindi
+                    ? 'अपॉइंटमेंट बुक करने, नुस्खे देखने और स्वास्थ्य रिकॉर्ड प्रबंधित करने के लिए अपनी प्रोफाइल बनाएं।'
+                    : (session.isMarathi
+                        ? 'भेटी बुक करण्यासाठी, औषधे पाहण्यासाठी आणि आरोग्य नोंदी व्यवस्थापित करण्यासाठी नोंदणी करा.'
+                        : 'Register your patient profile with ABHA Health ID to book appointments, view prescriptions, and manage care.'),
+                style: AppTypography.supporting,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PatientRegistrationScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add, size: 20),
+                  label: Text(
+                    session.isHindi
+                        ? '+ मरीज प्रोफ़ाइल बनाएं'
+                        : (session.isMarathi ? '+ रुग्ण प्रोफाइल नोंदणी करा' : '+ Register Patient Profile'),
+                    style: AppTypography.button,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: RuralCareColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
+  /// Assigned ASHA Community Health Worker row
+  Widget _buildAssignedCareRow(BuildContext context, String ashaName, SessionCoordinator session, PatientStrings strings) {
     return Container(
       decoration: AppDecorations.card(),
       padding: const EdgeInsets.all(16.0),
@@ -667,7 +902,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isHi ? 'नियुक्त आशा कार्यकर्ता' : (isMr ? 'नियुक्त आशा सेविका' : 'Assigned health worker'),
+                  strings.assignedAsha,
                   style: AppTypography.supporting,
                 ),
                 Text(
@@ -679,12 +914,17 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
           OutlinedButton.icon(
             onPressed: () {
+              final callMsg = session.isHindi
+                  ? 'आशा कार्यकर्ता $ashaName (+91 98220 19284) से संपर्क किया जा रहा है...'
+                  : (session.isMarathi
+                      ? 'आशा सेविका $ashaName (+91 98220 19284) यांच्याशी संपर्क साधत आहे...'
+                      : 'Contacting ASHA worker $ashaName (+91 98220 19284)...');
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Contacting ASHA worker $ashaName (+91 98220 19284)...')),
+                SnackBar(content: Text(callMsg)),
               );
             },
             icon: const Icon(Icons.phone_outlined, size: 16),
-            label: Text(isHi ? 'संपर्क' : (isMr ? 'संपर्क' : 'Call'), style: const TextStyle(fontSize: 13)),
+            label: Text(strings.callAsha, style: const TextStyle(fontSize: 13)),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 44),
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -697,10 +937,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   /// Restrained Emergency Help Action per DESIGN.md Section 6:
   /// "Visible, restrained Emergency help action with red icon/text—not a large permanent alarming banner."
-  Widget _buildEmergencyAction(BuildContext context, String lang) {
-    final isHi = lang == 'Hindi';
-    final isMr = lang == 'Marathi';
-
+  Widget _buildEmergencyAction(BuildContext context, SessionCoordinator session, PatientStrings strings) {
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -724,14 +961,14 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isHi ? 'आपातकालीन सहायता (108)' : (isMr ? 'तातडीची मदत (108)' : 'Emergency help (108)'),
+                    strings.emergencyHelp,
                     style: AppTypography.body.copyWith(
                       fontWeight: FontWeight.w600,
                       color: RuralCareColors.critical,
                     ),
                   ),
                   Text(
-                    isHi ? 'आपात स्थिति में एम्बुलेंस व अस्पताल सहायता' : (isMr ? 'रुग्णवाहिका व वैद्यकीय मदत' : 'Ambulance and facility emergency support'),
+                    strings.emergencySub,
                     style: AppTypography.supporting.copyWith(
                       color: RuralCareColors.critical,
                       fontSize: 12,

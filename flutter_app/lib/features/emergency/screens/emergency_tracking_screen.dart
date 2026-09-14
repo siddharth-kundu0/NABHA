@@ -33,11 +33,15 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
         final patient = patientRepo.defaultPatient;
         final isOffline = cache.isOffline;
         final isSosActive = emergRepo.hasActiveEmergency;
+        final isHi = session.isHindi;
+        final isMr = session.isMarathi;
+
+        final pageTitle = isHi ? 'आपातकालीन सहायता' : (isMr ? 'तातडीची मदत' : 'Emergency help');
 
         return Scaffold(
           backgroundColor: RuralCareColors.canvas,
           appBar: AppBar(
-            title: const Text('Emergency help', style: AppTypography.pageTitle),
+            title: Text(pageTitle, style: AppTypography.pageTitle),
             backgroundColor: RuralCareColors.surface,
             elevation: 0,
             bottom: const PreferredSize(
@@ -51,28 +55,28 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 1. Plain-language Scope & Explanation Card
-                _buildCapabilitiesCard(),
+                _buildCapabilitiesCard(isHi, isMr),
 
                 const SizedBox(height: 20),
 
                 // 2. Offline Warning Banner (if offline)
                 if (isOffline) ...[
-                  _buildOfflineWarningBanner(),
+                  _buildOfflineWarningBanner(isHi, isMr),
                   const SizedBox(height: 20),
                 ],
 
                 // 3. Location Sharing Choice (DESIGN.md: explicit location-sharing choice)
-                _buildLocationSharingCard(),
+                _buildLocationSharingCard(isHi, isMr),
 
                 const SizedBox(height: 20),
 
                 // 4. Real Status State Card (Queued, Sent, Acknowledged, Failed)
-                _buildStatusLedger(event, isOffline, isSosActive),
+                _buildStatusLedger(event, isOffline, isSosActive, isHi, isMr),
 
                 const SizedBox(height: 24),
 
                 // 5. Prominent Action Buttons (52px minimum height)
-                _buildActionButtons(context, emergRepo, isSosActive, patient),
+                _buildActionButtons(context, emergRepo, isSosActive, patient, isHi, isMr),
 
                 const SizedBox(height: 32),
               ],
@@ -83,31 +87,39 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
     );
   }
 
-  Widget _buildCapabilitiesCard() {
+  Widget _buildCapabilitiesCard(bool isHi, bool isMr) {
     return Container(
       decoration: AppDecorations.card(),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.info_outline_rounded, color: RuralCareColors.primary, size: 22),
-              SizedBox(width: 10),
+              const Icon(Icons.info_outline_rounded, color: RuralCareColors.primary, size: 22),
+              const SizedBox(width: 10),
               Text(
-                'How this service works',
+                isHi ? 'यह सेवा कैसे काम करती है' : (isMr ? 'ही सेवा कशी कार्य करते' : 'How this service works'),
                 style: AppTypography.cardTitle,
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Triggering an emergency alert transmits the patient’s critical clinical history, blood group, and approximate GPS coordinates to the nearest First Referral Unit (Baramati SDH) and notifies the designated frontline health worker.',
+          Text(
+            isHi
+                ? 'आपातकालीन अलर्ट भेजने पर मरीज़ का महत्वपूर्ण क्लिनिकल इतिहास, रक्त समूह और जीपीएस निकटतम उप-जिला अस्पताल (बारामती) को भेजा जाता है और नियुक्त फ्रंटलाइन आशा कार्यकर्ता को सूचित किया जाता है।'
+                : (isMr
+                    ? 'तातडीचा अलर्ट पाठवताच रुग्णाचा क्लिनिकल इतिहास, रक्तगट आणि जीपीएस जवळच्या उपजिल्हा रुग्णालयाला (बारामती) पाठवला जातो आणि नियुक्त आशा सेविकेला कळवले जाते.'
+                    : 'Triggering an emergency alert transmits the patient’s critical clinical history, blood group, and approximate GPS coordinates to the nearest First Referral Unit (Baramati SDH) and notifies the designated frontline health worker.'),
             style: AppTypography.body,
           ),
           const SizedBox(height: 6),
           Text(
-            'For immediate life-threatening events, always place a direct telephone call to the national 108 ambulance helpline.',
+            isHi
+                ? 'तत्काल जीवन-घातक स्थितियों में हमेशा राष्ट्रीय 108 एम्बुलेंस हेल्पलाइन पर सीधे कॉल करें।'
+                : (isMr
+                    ? 'तातडीच्या प्रसंगी नेहमी राष्ट्रीय १०८ रुग्णवाहिका हेल्पलाइनवर थेट संपर्क साधा.'
+                    : 'For immediate life-threatening events, always place a direct telephone call to the national 108 ambulance helpline.'),
             style: AppTypography.supporting.copyWith(color: RuralCareColors.critical),
           ),
         ],
@@ -115,7 +127,7 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
     );
   }
 
-  Widget _buildOfflineWarningBanner() {
+  Widget _buildOfflineWarningBanner(bool isHi, bool isMr) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -133,7 +145,7 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Offline mode active',
+                  isHi ? 'ऑफ़लाइन मोड सक्रिय' : (isMr ? 'ऑफलाइन मोड सक्रिय' : 'Offline mode active'),
                   style: AppTypography.body.copyWith(
                     fontWeight: FontWeight.w600,
                     color: RuralCareColors.warning,
@@ -141,7 +153,11 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Emergency alerts cannot reach the cloud server until internet connectivity is restored. Please call 108 directly.',
+                  isHi
+                      ? 'इंटरनेट कनेक्टिविटी बहाल होने तक आपातकालीन अलर्ट स्थानीय आउटबॉक्स में रहेगा। कृपया सीधे 108 पर कॉल करें।'
+                      : (isMr
+                          ? 'इंटरनेट येईपर्यंत आपत्कालीन अलर्ट स्थानिक आउटबॉक्समध्ये राहील. कृपया थेट १०८ वर कॉल करा.'
+                          : 'Emergency alerts cannot reach the cloud server until internet connectivity is restored. Please call 108 directly.'),
                   style: AppTypography.supporting.copyWith(color: RuralCareColors.warning),
                 ),
               ],
@@ -152,7 +168,7 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
     );
   }
 
-  Widget _buildLocationSharingCard() {
+  Widget _buildLocationSharingCard(bool isHi, bool isMr) {
     return Container(
       decoration: AppDecorations.card(),
       padding: const EdgeInsets.all(16),
@@ -163,7 +179,10 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Share location coordinates', style: AppTypography.body.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  isHi ? 'स्थान निर्देशांक साझा करें' : (isMr ? 'स्थान निर्देशांक सामायिक करा' : 'Share location coordinates'),
+                  style: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 2),
                 const Text(
                   'Kashti Village, Sector 3 (18.618° N, 74.571° E)',
@@ -182,21 +201,21 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
     );
   }
 
-  Widget _buildStatusLedger(event, bool isOffline, bool isSosActive) {
+  Widget _buildStatusLedger(event, bool isOffline, bool isSosActive, bool isHi, bool isMr) {
     String stateLabel;
     Color stateColor;
     Color stateBg;
 
     if (!isSosActive) {
-      stateLabel = 'Standby (Ready)';
+      stateLabel = isHi ? 'स्टैंडबाय (तैयार)' : (isMr ? 'सज्ज (तयार)' : 'Standby (Ready)');
       stateColor = RuralCareColors.textSecondary;
       stateBg = RuralCareColors.surfaceSubtle;
     } else if (isOffline) {
-      stateLabel = 'Queued in local outbox (Offline)';
+      stateLabel = isHi ? 'ऑफ़लाइन आउटबॉक्स में कतारबद्ध' : (isMr ? 'ऑफलाइन आउटबॉक्समध्ये रांगेत' : 'Queued in local outbox (Offline)');
       stateColor = RuralCareColors.warning;
       stateBg = RuralCareColors.warningSoft;
     } else {
-      stateLabel = 'Sent & Acknowledged';
+      stateLabel = isHi ? 'भेजा गया एवं स्वीकृत' : (isMr ? 'पाठवले आणि स्वीकारले' : 'Sent & Acknowledged');
       stateColor = RuralCareColors.success;
       stateBg = RuralCareColors.successSoft;
     }
@@ -210,7 +229,10 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Alert transmission status', style: AppTypography.cardTitle),
+              Text(
+                isHi ? 'अलर्ट संचरण स्थिति' : (isMr ? 'अलर्ट पाठवण्याची स्थिती' : 'Alert transmission status'),
+                style: AppTypography.cardTitle,
+              ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: AppDecorations.statusBadge(background: stateBg),
@@ -228,21 +250,27 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
           ),
           const SizedBox(height: 14),
           _statusCheckRow(
-            'Patient clinical profile packaged',
+            isHi ? 'मरीज़ क्लिनिकल प्रोफ़ाइल तैयार' : (isMr ? 'रुग्ण क्लिनिकल प्रोफाइल तयार' : 'Patient clinical profile packaged'),
             isSosActive,
-            'Blood group, ANC telemetry, current medications',
+            isHi ? 'रक्त समूह, एएनसी टेलीमेट्री, वर्तमान दवाएं' : (isMr ? 'रक्तगट, एएनसी टेलीमेट्री, औषधोपचार' : 'Blood group, ANC telemetry, current medications'),
           ),
           const SizedBox(height: 10),
           _statusCheckRow(
-            'Baramati SDH Emergency Department alerted',
+            isHi ? 'बारामती उप-जिला अस्पताल अलर्ट' : (isMr ? 'बारामती उपजिल्हा रुग्णालय अलर्ट' : 'Baramati SDH Emergency Department alerted'),
             isSosActive && !isOffline,
-            isSosActive ? (isOffline ? 'Queued to send on reconnect' : 'Dossier received by triage desk') : 'Awaiting trigger',
+            isSosActive
+                ? (isOffline
+                    ? (isHi ? 'पुनः कनेक्ट होने पर भेजने के लिए कतारबद्ध' : 'Queued to send on reconnect')
+                    : (isHi ? 'ट्राइएज डेस्क द्वारा विवरण प्राप्त' : 'Dossier received by triage desk'))
+                : (isHi ? 'ट्रिगर की प्रतीक्षा में' : 'Awaiting trigger'),
           ),
           const SizedBox(height: 10),
           _statusCheckRow(
-            'Frontline ASHA Worker pre-notified',
+            isHi ? 'फ्रंटलाइन आशा कार्यकर्ता को पूर्व-सूचना' : (isMr ? 'आशा सेविकेला पूर्व-सूचना' : 'Frontline ASHA Worker pre-notified'),
             isSosActive,
-            isSosActive ? 'SMS notification triggered' : 'Awaiting trigger',
+            isSosActive
+                ? (isHi ? 'एसएमएस अधिसूचना भेजी गई' : 'SMS notification triggered')
+                : (isHi ? 'ट्रिगर की प्रतीक्षा में' : 'Awaiting trigger'),
           ),
         ],
       ),
@@ -285,7 +313,13 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
     EmergencyRepository emergRepo,
     bool isSosActive,
     dynamic patient,
+    bool isHi,
+    bool isMr,
   ) {
+    final call108Label = isHi ? 'अभी 108 एम्बुलेंस को कॉल करें' : (isMr ? 'आता १०८ रुग्णवाहिकेला कॉल करा' : 'Call 108 ambulance now');
+    final sendSosLabel = isHi ? 'एसडीएच को डिजिटल एसओएस अलर्ट भेजें' : (isMr ? 'रुग्णालयाला डिजिटल एसओएस अलर्ट पाठवा' : 'Send digital SOS alert to SDH');
+    final resolveLabel = isHi ? 'अलर्ट समाप्त करें' : (isMr ? 'अलर्ट समाप्त करा' : 'Resolve / stand down alert');
+
     return Column(
       children: [
         // 1. Direct 108 Telephone Dialer
@@ -299,7 +333,7 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
               );
             },
             icon: const Icon(Icons.phone_in_talk_rounded, size: 20),
-            label: const Text('Call 108 ambulance now', style: AppTypography.button),
+            label: Text(call108Label, style: AppTypography.button),
             style: ElevatedButton.styleFrom(
               backgroundColor: RuralCareColors.critical,
               foregroundColor: Colors.white,
@@ -327,7 +361,7 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
                 );
               },
               icon: const Icon(Icons.emergency_outlined, size: 20),
-              label: const Text('Send digital SOS alert to SDH'),
+              label: Text(sendSosLabel),
               style: OutlinedButton.styleFrom(
                 foregroundColor: RuralCareColors.critical,
                 side: const BorderSide(color: RuralCareColors.critical),
@@ -347,7 +381,7 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
                 );
               },
               icon: const Icon(Icons.check_circle_outline, size: 20),
-              label: const Text('Resolve / stand down alert'),
+              label: Text(resolveLabel),
               style: OutlinedButton.styleFrom(
                 foregroundColor: RuralCareColors.textPrimary,
                 side: const BorderSide(color: RuralCareColors.inputBorder),

@@ -21,8 +21,6 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
     return ListenableBuilder(
       listenable: session,
       builder: (context, _) {
-        final activeLang = session.activeLanguage;
-
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFC),
           appBar: PreferredSize(
@@ -75,30 +73,39 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                               ),
                               child: Row(
                                 children: [
-                                  Text(
-                                    'EN',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: activeLang == 'English' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                  InkWell(
+                                    onTap: () => session.switchLanguage('en'),
+                                    child: Text(
+                                      'EN',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: session.isEnglish ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                   const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
-                                  Text(
-                                    'हि',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: activeLang == 'Hindi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                  InkWell(
+                                    onTap: () => session.switchLanguage('hi'),
+                                    child: Text(
+                                      'हि',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: session.isHindi ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                   const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
-                                  Text(
-                                    'म',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: activeLang == 'Marathi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                  InkWell(
+                                    onTap: () => session.switchLanguage('mr'),
+                                    child: Text(
+                                      'म',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: session.isMarathi ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -118,14 +125,16 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                                   color: const Color(0xFFDC2626),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.emergency_rounded, color: Colors.white, size: 12),
-                                    SizedBox(width: 4),
+                                    const Icon(Icons.emergency_rounded, color: Colors.white, size: 12),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      'Emergency Help',
-                                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                                      session.isHindi
+                                          ? 'आपातकालीन सहायता'
+                                          : (session.isMarathi ? 'तातडीची मदत' : 'Emergency Help'),
+                                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                                     ),
                                   ],
                                 ),
@@ -148,25 +157,27 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                       InkWell(
                         onTap: () => Navigator.of(context).pop(),
                         borderRadius: BorderRadius.circular(6),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           child: Row(
                             children: [
-                              Icon(Icons.arrow_back, size: 18, color: Color(0xFF475569)),
-                              SizedBox(width: 4),
+                              const Icon(Icons.arrow_back, size: 18, color: Color(0xFF475569)),
+                              const SizedBox(width: 4),
                               Text(
-                                'Back',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
+                                session.isHindi ? 'वापस' : (session.isMarathi ? 'मागे' : 'Back'),
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Center(
                           child: Text(
-                            'Language & Accessibility',
-                            style: TextStyle(
+                            session.isHindi
+                                ? 'भाषा एवं सुगमता'
+                                : (session.isMarathi ? 'भाषा आणि सुलभता' : 'Language & Accessibility'),
+                            style: const TextStyle(
                               fontFamily: 'Noto Sans',
                               fontSize: 15.5,
                               fontWeight: FontWeight.w700,
@@ -211,7 +222,7 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                         border: Border.all(color: const Color(0xFF86EFAC)),
                       ),
                       child: Text(
-                        'Active: $activeLang',
+                        'Active: ${session.isHindi ? "हिन्दी" : (session.isMarathi ? "मराठी" : "English")}',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -234,8 +245,8 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                   title: 'English',
                   subtitle: 'Standard Clinical Terminology',
                   tag: 'Default',
-                  isSelected: activeLang == 'English',
-                  onTap: () => session.switchLanguage('English'),
+                  isSelected: session.isEnglish,
+                  onTap: () => session.switchLanguage('en'),
                 ),
                 const SizedBox(height: 10),
                 _buildLanguageCard(
@@ -243,8 +254,8 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                   title: 'हिन्दी',
                   secondaryTitle: '(Hindi)',
                   subtitle: 'ग्रामीण स्वास्थ्य इंटरफ़ेस',
-                  isSelected: activeLang == 'Hindi',
-                  onTap: () => session.switchLanguage('Hindi'),
+                  isSelected: session.isHindi,
+                  onTap: () => session.switchLanguage('hi'),
                 ),
                 const SizedBox(height: 10),
                 _buildLanguageCard(
@@ -252,9 +263,10 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                   title: 'मराठी',
                   secondaryTitle: '(Marathi)',
                   subtitle: 'स्थानिक आरोग्य इंटरफेस',
-                  isSelected: activeLang == 'Marathi',
-                  onTap: () => session.switchLanguage('Marathi'),
+                  isSelected: session.isMarathi,
+                  onTap: () => session.switchLanguage('mr'),
                 ),
+
 
                 const SizedBox(height: 22),
 
@@ -365,9 +377,9 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              activeLang == 'Hindi'
+                              session.isHindi
                                   ? 'परामर्श और पर्चा'
-                                  : (activeLang == 'Marathi' ? 'सल्ला व औषधोपचार' : 'Sample Heading'),
+                                  : (session.isMarathi ? 'सल्ला व औषधोपचार' : 'Sample Heading'),
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: session.largerText ? 16 : 14.5,
@@ -376,9 +388,9 @@ class _LanguageAccessibilityScreenState extends State<LanguageAccessibilityScree
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              activeLang == 'Hindi'
+                              session.isHindi
                                   ? 'पठनीयता जांच के लिए उदाहरण पाठ।'
-                                  : (activeLang == 'Marathi' ? 'वाचन सुलभतेसाठी प्रात्यक्षिक मजकूर.' : 'Example text for display readability and size preview.'),
+                                  : (session.isMarathi ? 'वाचन सुलभतेसाठी प्रात्यक्षिक मजकूर.' : 'Example text for display readability and size preview.'),
                               style: TextStyle(
                                 color: const Color(0xFF94A3B8),
                                 fontSize: session.largerText ? 12.5 : 11,

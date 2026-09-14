@@ -5,7 +5,9 @@ import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:ruralcare/app/routes.dart';
+import 'package:ruralcare/data/repositories/consent_repository.dart';
 import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
+import '../utils/patient_strings.dart';
 
 /// Screen 4: Privacy, Contacts & Security (V2 Modern)
 /// Exactly reproducing Stitch Screen `04162c5bed434968863f15176672fac1`
@@ -19,7 +21,7 @@ class PrivacySecurityScreen extends StatefulWidget {
 }
 
 class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
-  void _openEditContactDialog(BuildContext context, PatientRepository patientRepo, PatientDto current) {
+  void _openEditContactDialog(BuildContext context, PatientRepository patientRepo, PatientDto current, PatientStrings strings) {
     final nameCtrl = TextEditingController(text: current.emergencyContact.name);
     final relCtrl = TextEditingController(text: current.emergencyContact.relationship);
     final phoneCtrl = TextEditingController(text: current.emergencyContact.phoneNumber);
@@ -48,9 +50,9 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Emergency Contact Details',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                    Text(
+                      strings.emergencyContactDetails,
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
@@ -59,21 +61,21 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Contact Full Name', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                Text(strings.contactFullName, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 const SizedBox(height: 6),
                 TextField(
                   controller: nameCtrl,
                   decoration: AppDecorations.input(hintText: 'e.g. Rajesh Devi / Sunita Sharma'),
                 ),
                 const SizedBox(height: 14),
-                const Text('Relationship', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                Text(strings.relationshipLabel, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 const SizedBox(height: 6),
                 TextField(
                   controller: relCtrl,
                   decoration: AppDecorations.input(hintText: 'e.g. Wife / Spouse / Husband / Parent'),
                 ),
                 const SizedBox(height: 14),
-                const Text('Phone Number', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                Text(strings.phoneNumberLabel, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 const SizedBox(height: 6),
                 TextField(
                   controller: phoneCtrl,
@@ -102,13 +104,13 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                       }
                       Navigator.of(ctx).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Emergency contact saved and verified'),
-                          backgroundColor: Color(0xFF0A6B56),
+                        SnackBar(
+                          content: Text(strings.contactSavedToast),
+                          backgroundColor: const Color(0xFF0A6B56),
                         ),
                       );
                     },
-                    child: const Text('Save Contact', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text(strings.saveContactBtn, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -132,6 +134,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
           (p) => p.id == widget.patient.id,
           orElse: () => widget.patient,
         );
+        final strings = PatientStrings.of(session);
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFC),
@@ -175,7 +178,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         ),
                         Row(
                           children: [
-                            // Language Pill
+                            // Interactive Language Pill
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
                               decoration: BoxDecoration(
@@ -185,30 +188,39 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Text(
-                                    'EN',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: session.activeLanguage == 'English' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                  InkWell(
+                                    onTap: () => session.switchLanguage('en'),
+                                    child: Text(
+                                      'EN',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: session.isEnglish ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                   const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
-                                  Text(
-                                    'हि',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: session.activeLanguage == 'Hindi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                  InkWell(
+                                    onTap: () => session.switchLanguage('hi'),
+                                    child: Text(
+                                      'हि',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: session.isHindi ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                   const Text(' | ', style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1))),
-                                  Text(
-                                    'म',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: session.activeLanguage == 'Marathi' ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                  InkWell(
+                                    onTap: () => session.switchLanguage('mr'),
+                                    child: Text(
+                                      'म',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: session.isMarathi ? const Color(0xFF0A6B56) : const Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -228,14 +240,14 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                   color: const Color(0xFFDC2626),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.emergency_rounded, color: Colors.white, size: 12),
-                                    SizedBox(width: 4),
+                                    const Icon(Icons.emergency_rounded, color: Colors.white, size: 12),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      'Emergency Help',
-                                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                                      strings.emergencyHelp,
+                                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                                     ),
                                   ],
                                 ),
@@ -258,25 +270,25 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                       InkWell(
                         onTap: () => Navigator.of(context).pop(),
                         borderRadius: BorderRadius.circular(6),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           child: Row(
                             children: [
-                              Icon(Icons.arrow_back, size: 18, color: Color(0xFF475569)),
-                              SizedBox(width: 4),
+                              const Icon(Icons.arrow_back, size: 18, color: Color(0xFF475569)),
+                              const SizedBox(width: 4),
                               Text(
-                                'Back',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
+                                strings.back,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Center(
                           child: Text(
-                            'Privacy & Security',
-                            style: TextStyle(
+                            strings.privacySecurityTitle,
+                            style: const TextStyle(
                               fontFamily: 'Noto Sans',
                               fontSize: 15.5,
                               fontWeight: FontWeight.w700,
@@ -303,25 +315,25 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.emergency_rounded, color: Color(0xFFEF4444), size: 18),
-                        SizedBox(width: 6),
+                        const Icon(Icons.emergency_rounded, color: Color(0xFFEF4444), size: 18),
+                        const SizedBox(width: 6),
                         Text(
-                          'Emergency Contact',
-                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                          strings.emergencyContactsItem,
+                          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                         ),
                       ],
                     ),
                     InkWell(
-                      onTap: () => _openEditContactDialog(context, patientRepo, currentPatient),
-                      child: const Row(
+                      onTap: () => _openEditContactDialog(context, patientRepo, currentPatient, strings),
+                      child: Row(
                         children: [
-                          Icon(Icons.add_circle_outline_rounded, size: 15, color: Color(0xFF0A6B56)),
-                          SizedBox(width: 4),
+                          const Icon(Icons.add_circle_outline_rounded, size: 15, color: Color(0xFF0A6B56)),
+                          const SizedBox(width: 4),
                           Text(
-                            '+ Add Contact',
-                            style: TextStyle(
+                            session.isHindi ? '+ संपर्क जोड़ें' : (session.isMarathi ? '+ संपर्क जोडा' : '+ Add Contact'),
+                            style: const TextStyle(
                               fontFamily: 'Noto Sans',
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -370,7 +382,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                     ),
                                     const SizedBox(width: 5),
                                     Text(
-                                      '(${currentPatient.emergencyContact.relationship.isNotEmpty ? currentPatient.emergencyContact.relationship : "Wife / पत्नी"})',
+                                      '(${currentPatient.emergencyContact.relationship.isNotEmpty ? currentPatient.emergencyContact.relationship : (session.isHindi ? "पत्नी" : (session.isMarathi ? "पत्नी" : "Spouse"))})',
                                       style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                                     ),
                                   ],
@@ -397,13 +409,13 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                               color: const Color(0xFFDCFCE7),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
-                                Icon(Icons.circle, size: 6, color: Color(0xFF15803D)),
-                                SizedBox(width: 4),
+                                const Icon(Icons.circle, size: 6, color: Color(0xFF15803D)),
+                                const SizedBox(width: 4),
                                 Text(
-                                  'Active / सक्रिय',
-                                  style: TextStyle(
+                                  strings.verified,
+                                  style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     color: Color(0xFF15803D),
@@ -421,16 +433,16 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           InkWell(
-                            onTap: () => _openEditContactDialog(context, patientRepo, currentPatient),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            onTap: () => _openEditContactDialog(context, patientRepo, currentPatient, strings),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               child: Row(
                                 children: [
-                                  Icon(Icons.edit_outlined, size: 14, color: Color(0xFF475569)),
-                                  SizedBox(width: 4),
+                                  const Icon(Icons.edit_outlined, size: 14, color: Color(0xFF475569)),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    'Edit',
-                                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                    strings.edit,
+                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
                                   ),
                                 ],
                               ),
@@ -444,18 +456,18 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                 contact: const EmergencyContactDto(name: '', relationship: '', phoneNumber: ''),
                               );
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Contact removed')),
+                                SnackBar(content: Text(session.isHindi ? 'संपर्क हटाया गया' : (session.isMarathi ? 'संपर्क काढून टाकला' : 'Contact removed'))),
                               );
                             },
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete_outline_rounded, size: 14, color: Color(0xFFEF4444)),
-                                  SizedBox(width: 4),
+                                  const Icon(Icons.delete_outline_rounded, size: 14, color: Color(0xFFEF4444)),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    'Remove',
-                                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFFEF4444)),
+                                    session.isHindi ? 'हटाएं' : (session.isMarathi ? 'काढून टाका' : 'Remove'),
+                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFFEF4444)),
                                   ),
                                 ],
                               ),
@@ -467,14 +479,16 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.info_outline, size: 13, color: Color(0xFFF59E0B)),
-                    SizedBox(width: 5),
+                    const Icon(Icons.info_outline, size: 13, color: Color(0xFFF59E0B)),
+                    const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        'This contact is notified if you trigger an emergency alert.',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        session.isHindi
+                            ? 'यदि आप आपातकालीन अलर्ट ट्रिगर करते हैं तो इस संपर्क को सूचित किया जाएगा।'
+                            : (session.isMarathi ? 'आपण आपत्कालीन सूचना दिल्यास या संपर्कास कळवले जाईल.' : 'This contact is notified if you trigger an emergency alert.'),
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                       ),
                     ),
                   ],
@@ -483,13 +497,13 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                 const SizedBox(height: 22),
 
                 // SECTION 2: DATA SHARING & CONSENT
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.verified_user_outlined, color: Color(0xFF0A6B56), size: 18),
-                    SizedBox(width: 6),
+                    const Icon(Icons.verified_user_outlined, color: Color(0xFF0A6B56), size: 18),
+                    const SizedBox(width: 6),
                     Text(
-                      'Data Sharing & Consent',
-                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                      strings.privacySecurityItem,
+                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                     ),
                   ],
                 ),
@@ -506,18 +520,24 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Share Records with Attending Doctors',
-                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                    session.isHindi
+                                        ? 'उपस्थित डॉक्टरों के साथ रिकॉर्ड साझा करें'
+                                        : (session.isMarathi ? 'उपस्थित डॉक्टरांसोबत नोंदी शेअर करा' : 'Share Records with Attending Doctors'),
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
-                                    'Allows doctors at PHC Rampur to review your consultation history.',
-                                    style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                    session.isHindi
+                                        ? 'पीएचसी रामपुर के डॉक्टरों को आपकी परामर्श हिस्ट्री देखने की अनुमति देता है।'
+                                        : (session.isMarathi
+                                            ? 'प्राथमिक आरोग्य केंद्रातील डॉक्टरांना तुमचा पूर्वेतिहास पाहण्याची परवानगी देतो.'
+                                            : 'Allows doctors at PHC Rampur to review your consultation history.'),
+                                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                                   ),
                                 ],
                               ),
@@ -536,18 +556,20 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Offline Record Cache',
-                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                    session.isHindi ? 'ऑफलाइन रिकॉर्ड कैश' : (session.isMarathi ? 'ऑफलाइन रेकॉर्ड कॅशे' : 'Offline Record Cache'),
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
-                                    'Keep selected records available on this device.',
-                                    style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                    session.isHindi
+                                        ? 'इस डिवाइस पर चयनित रिकॉर्ड उपलब्ध रखें।'
+                                        : (session.isMarathi ? 'या डिव्हाइसवर निवडलेल्या नोंदी उपलब्ध ठेवा.' : 'Keep selected records available on this device.'),
+                                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                                   ),
                                 ],
                               ),
@@ -561,41 +583,112 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Text('🔒', style: TextStyle(fontSize: 12)),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Control how your health information is shared for care.',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
-                        ),
+                      // ABDM Digital Consent Artifacts
+                      const Divider(color: Color(0xFFE2E8F0), height: 1),
+                      ListenableBuilder(
+                        listenable: ConsentRepository(),
+                        builder: (context, _) {
+                          final consentRepo = ConsentRepository();
+                          final patientRequests = consentRepo.requests.where((r) => r.patientId == widget.patient.id).toList();
+
+                          if (patientRequests.isEmpty) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.verified_user_outlined, size: 16, color: Color(0xFF0A6B56)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      session.isHindi
+                                          ? 'कोई लंबित डॉक्टर पहुंच अनुरोध नहीं। आपका डेटा सुरक्षित और निजी है।'
+                                          : (session.isMarathi
+                                              ? 'कोणतीही प्रलंबित डॉक्टर प्रवेश विनंती नाही. तुमचा डेटा सुरक्षित आणि खाजगी आहे.'
+                                              : 'No pending doctor access requests. Your records are private.'),
+                                      style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return Column(
+                            children: patientRequests.map((req) {
+                              final isGranted = req.isGranted;
+                              final doctorReqTitle = session.isHindi
+                                  ? '${req.doctorName} से अनुरोध'
+                                  : (session.isMarathi ? '${req.doctorName} कडून विनंती' : 'Request from ${req.doctorName}');
+                              final authBadgeLabel = isGranted
+                                  ? (session.isHindi ? 'सत्यापित / अधिकृत' : (session.isMarathi ? 'अधिकृत' : 'Authorized'))
+                                  : (session.isHindi ? 'ओटीपी लंबित' : (session.isMarathi ? 'ओटीपी प्रलंबित' : 'Pending OTP'));
+                              final facilityPrefix = session.isHindi ? 'अस्पताल: ' : (session.isMarathi ? 'रुग्णालय: ' : 'Facility: ');
+                              final purposePrefix = session.isHindi ? 'उद्देश्य: ' : (session.isMarathi ? 'उद्देश: ' : 'Purpose: ');
+                              final otpLabel = session.isHindi ? 'सत्यापन ओटीपी: ' : (session.isMarathi ? 'पडताळणी ओटीपी: ' : 'Your Verification OTP: ');
+
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                color: isGranted ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          doctorReqTitle,
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: isGranted ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            authBadgeLabel,
+                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: isGranted ? const Color(0xFF166534) : const Color(0xFF92400E)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '$facilityPrefix${req.doctorFacility} • $purposePrefix${req.purpose}',
+                                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                    ),
+                                    if (!isGranted) ...[
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Text(otpLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                          Text(
+                                            req.otp,
+                                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0A6B56), letterSpacing: 1),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 22),
+                const SizedBox(height: 8),
 
                 // SECTION 3: ACCOUNT ACTIONS
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.manage_accounts_outlined, color: Color(0xFF64748B), size: 18),
-                    SizedBox(width: 6),
+                    const Icon(Icons.manage_accounts_outlined, color: Color(0xFF64748B), size: 18),
+                    const SizedBox(width: 6),
                     Text(
-                      'Account Actions',
-                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                      session.isHindi ? 'खाता कार्रवाई' : (session.isMarathi ? 'खाते कृती' : 'Account Actions'),
+                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                     ),
                   ],
                 ),
@@ -611,7 +704,13 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                       InkWell(
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Verification OTP sent to registered number')),
+                            SnackBar(
+                              content: Text(session.isHindi
+                                  ? 'पंजीकृत नंबर पर सत्यापन ओटीपी भेजा गया'
+                                  : (session.isMarathi
+                                      ? 'नोंदणीकृत क्रमांकावर पडताळणी ओटीपी पाठवला'
+                                      : 'Verification OTP sent to registered number')),
+                            ),
                           );
                         },
                         child: Padding(
@@ -631,9 +730,11 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                     child: const Icon(Icons.phone_iphone_rounded, color: Color(0xFF0A6B56), size: 18),
                                   ),
                                   const SizedBox(width: 10),
-                                  const Text(
-                                    'Update Registered Mobile',
-                                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                  Text(
+                                    session.isHindi
+                                        ? 'पंजीकृत मोबाइल अपडेट करें'
+                                        : (session.isMarathi ? 'नोंदणीकृत मोबाइल अद्ययावत करा' : 'Update Registered Mobile'),
+                                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                                   ),
                                 ],
                               ),
@@ -648,12 +749,12 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                           showDialog(
                             context: context,
                             builder: (ctx) => AlertDialog(
-                              title: const Text('Sign Out from Device?'),
-                              content: const Text('Your offline data will remain preserved.'),
+                              title: Text(session.isHindi ? 'डिवाइस से लॉग आउट करें?' : (session.isMarathi ? 'डिव्हाइसमधून लॉग आउट करायचे?' : 'Sign Out from Device?')),
+                              content: Text(session.isHindi ? 'आपका ऑफलाइन डेटा सुरक्षित रहेगा।' : (session.isMarathi ? 'तुमचा ऑफलाइन डेटा सुरक्षित राहील.' : 'Your offline data will remain preserved.')),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.of(ctx).pop(),
-                                  child: const Text('Cancel'),
+                                  child: Text(strings.cancel),
                                 ),
                                 ElevatedButton(
                                   style: AppDecorations.primaryButton(),
@@ -661,7 +762,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                     Navigator.of(ctx).pop();
                                     session.resetToOnboarding();
                                   },
-                                  child: const Text('Sign Out'),
+                                  child: Text(strings.logOut),
                                 ),
                               ],
                             ),
@@ -684,9 +785,9 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                     child: const Icon(Icons.logout_rounded, color: Color(0xFF475569), size: 18),
                                   ),
                                   const SizedBox(width: 10),
-                                  const Text(
-                                    'Sign Out of Device',
-                                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                  Text(
+                                    strings.logOut,
+                                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                                   ),
                                 ],
                               ),
@@ -700,7 +801,13 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         onTap: () {
                           cache.syncOutbox();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Local profile and cache removed from this device')),
+                            SnackBar(
+                              content: Text(session.isHindi
+                                  ? 'स्थानीय कैश सफलतापूर्वक सिंक और साफ़ किया गया'
+                                  : (session.isMarathi
+                                      ? 'स्थानिक कॅशे यशस्वीरित्या समक्रमित आणि साफ केला'
+                                      : 'Local profile and cache synced')),
+                            ),
                           );
                         },
                         child: Padding(
@@ -720,17 +827,23 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                                     child: const Icon(Icons.block_flipped, color: Color(0xFFDC2626), size: 18),
                                   ),
                                   const SizedBox(width: 10),
-                                  const Column(
+                                  Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Delete / Close Account',
-                                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFFDC2626)),
+                                        session.isHindi
+                                            ? 'अकाउंट हटाएं / बंद करें'
+                                            : (session.isMarathi ? 'खाते हटवा / बंद करा' : 'Delete / Close Account'),
+                                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFFDC2626)),
                                       ),
-                                      SizedBox(height: 1),
+                                      const SizedBox(height: 1),
                                       Text(
-                                        'Removes local profile from this device.',
-                                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        session.isHindi
+                                            ? 'इस डिवाइस से स्थानीय प्रोफ़ाइल हटाता है।'
+                                            : (session.isMarathi
+                                                ? 'या डिव्हाइसवरून स्थानिक प्रोफाइल काढून टाकते.'
+                                                : 'Removes local profile from this device.'),
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                                       ),
                                     ],
                                   ),

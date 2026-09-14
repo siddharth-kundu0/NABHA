@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/models/vitals_dto.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
+import 'package:ruralcare/app/routes.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PatientRepository extends ChangeNotifier {
@@ -9,92 +11,143 @@ class PatientRepository extends ChangeNotifier {
   factory PatientRepository() => _instance;
   PatientRepository._internal() {
     _loadInitialData();
+    bindFirestoreStream();
   }
 
   final LocalCacheService _cache = LocalCacheService();
   late List<PatientDto> _patients;
+  PatientDto? _activePatient;
+  StreamSubscription<QuerySnapshot>? _firestoreSubscription;
 
-  List<PatientDto> get patients => _patients;
-  PatientDto get defaultPatient => _patients.first;
+  List<PatientDto> get patients {
+    final session = SessionCoordinator();
+    if (session.activeRole == AppRole.patient && session.currentUserId != null) {
+      final cleanId = session.currentUserEmail?.replaceAll('@ruralcare.nabha.gov.in', '') ?? session.currentUserId ?? '';
+      final userMatch = _patients.where((p) {
+        final cleanPhone = p.phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+        final cleanAbha = p.abhaId.replaceAll(RegExp(r'[^0-9]'), '');
+        final targetClean = cleanId.replaceAll(RegExp(r'[^0-9]'), '');
+        return p.id == session.currentUserId ||
+            (targetClean.isNotEmpty && cleanPhone.endsWith(targetClean)) ||
+            (targetClean.isNotEmpty && cleanAbha.endsWith(targetClean));
+      }).toList();
+      if (userMatch.isNotEmpty) return userMatch;
+      if (_activePatient != null) return [_activePatient!];
+    }
+    return _patients;
+  }
+
+  PatientDto getOrCreatePatientForIdentifier(String identifier) {
+    final cleanId = identifier.replaceAll(RegExp(r'[^0-9]'), '');
+    final matches = _patients.where((p) {
+      final cleanPhone = p.phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+      final cleanAbha = p.abhaId.replaceAll(RegExp(r'[^0-9]'), '');
+      return p.id == identifier ||
+          (cleanId.isNotEmpty && cleanPhone.endsWith(cleanId)) ||
+          (cleanId.isNotEmpty && cleanAbha.endsWith(cleanId));
+    });
+
+    if (matches.isNotEmpty) {
+      _activePatient = matches.first;
+      return matches.first;
+    }
+
+    final newPatient = PatientDto(
+      id: 'pat-${identifier.hashCode.abs().toString().substring(0, 6)}',
+      ruralCareId: 'RC-MH-${identifier.length >= 4 ? identifier.substring(identifier.length - 4) : "1001"}',
+      abhaId: '91-${identifier.length >= 8 ? "${identifier.substring(0, 4)}-${identifier.substring(4, 8)}" : "8492-1029"}-8472',
+      fullName: 'Citizen ($identifier)',
+      age: 28,
+      gender: 'FEMALE',
+      phoneNumber: identifier.startsWith('+') ? identifier : '+91$identifier',
+      village: 'Kashti',
+      subCentre: 'Kashti Sub-Centre',
+      district: 'Pune Rural',
+      assignedAsha: 'Sunita Tai Gaikwad',
+      emergencyContact: EmergencyContactDto(
+        name: 'Family Member',
+        relationship: 'Family',
+        phoneNumber: identifier.startsWith('+') ? identifier : '+91$identifier',
+      ),
+    );
+    addPatient(newPatient);
+    _activePatient = newPatient;
+    return newPatient;
+  }
+
+  PatientDto? get defaultPatient => _patients.isNotEmpty ? _patients.first : null;
+  PatientDto? get activePatient => _activePatient ?? defaultPatient;
+  bool get hasPatients => _patients.isNotEmpty;
+
+  PatientDto? findPatientByMobileOrId(String identifier) {
+    final clean = identifier.trim().toLowerCase();
+    final digits = clean.replaceAll(RegExp(r'\D'), '');
+    for (final p in _patients) {
+      final pPhone = p.phoneNumber.replaceAll(RegExp(r'\D'), '');
+      final pAbha = p.abhaId.replaceAll(RegExp(r'\D'), '');
+      if (p.id.toLowerCase() == clean ||
+          (digits.isNotEmpty && pPhone.isNotEmpty && (pPhone.endsWith(digits) || digits.endsWith(pPhone))) ||
+          (digits.isNotEmpty && pAbha.isNotEmpty && (pAbha.endsWith(digits) || digits.endsWith(pAbha)))) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  void bindFirestoreStream({AppRole role = AppRole.doctor, String? userId, String? subCentre}) {
+    _firestoreSubscription?.cancel();
+    if (_cache.isOffline) return;
+
+    try {
+      Query query = FirebaseFirestore.instance.collection('patients');
+      if (role == AppRole.patient && userId != null) {
+        query = query.where('userId', isEqualTo: userId);
+      } else if (role == AppRole.healthWorker && subCentre != null && subCentre.isNotEmpty) {
+        query = query.where('subCentre', isEqualTo: subCentre);
+      }
+
+      _firestoreSubscription = query.snapshots().listen((snapshot) {
+        if (snapshot.docs.isNotEmpty) {
+          for (final doc in snapshot.docs) {
+            try {
+              final data = doc.data() as Map<String, dynamic>;
+              final cp = PatientDto.fromJson(data);
+              final existingIdx = _patients.indexWhere((p) => p.id == cp.id);
+              if (existingIdx != -1) {
+                _patients[existingIdx] = cp;
+              } else {
+                _patients.add(cp);
+              }
+            } catch (_) {}
+          }
+          if (role == AppRole.patient && _patients.isNotEmpty) {
+            _activePatient = _patients.first;
+          }
+          notifyListeners();
+        }
+      }, onError: (e) {
+        debugPrint('Notice in patient firestore stream: $e');
+      });
+    } catch (e) {
+      debugPrint('Notice binding patient stream: $e');
+    }
+  }
 
   void _loadInitialData() {
-    _patients = [
-      PatientDto(
-        id: 'pat-001',
-        ruralCareId: 'RC-MH-11021',
-        abhaId: '91-4829-1029-8472',
-        fullName: 'Kavita Rajesh Devi',
-        age: 26,
-        gender: 'FEMALE',
-        phoneNumber: '+919823411204',
-        village: 'Kashti',
-        subCentre: 'Kashti Sub-Centre',
-        district: 'Pune Rural',
-        assignedAsha: 'Sunita Tai Gaikwad',
-        isPregnant: true,
-        gestationalAgeWeeks: 32,
-        ancVisitsCompleted: 3,
-        edd: DateTime.now().add(const Duration(days: 56)),
-        highRiskConditions: ['GESTATIONAL_HYPERTENSION', 'SEVERE_ANAEMIA'],
-        chronicConditions: ['ANAEMIA'],
-        allergies: ['PENICILLIN'],
-        emergencyContact: const EmergencyContactDto(
-          name: 'Rajesh Devi',
-          relationship: 'HUSBAND',
-          phoneNumber: '+919823411205',
-        ),
-        latestVitals: VitalsDto(
-          id: 'vit-001',
-          patientId: 'pat-001',
-          recordedById: 'asha-904',
-          recordedByRole: 'HEALTH_WORKER',
-          recordedAt: DateTime.now().subtract(const Duration(hours: 2)),
-          systolicBp: 148,
-          diastolicBp: 96,
-          pulse: 88,
-          spO2: 96,
-          temperature: 98.6,
-          bloodSugar: 142,
-          haemoglobin: 7.8,
-          isFromBleDevice: true,
-        ),
-      ),
-      PatientDto(
-        id: 'pat-002',
-        ruralCareId: 'RC-MH-11022',
-        abhaId: '91-3829-9182-1102',
-        fullName: 'Ramesh Balu Jadhav',
-        age: 54,
-        gender: 'MALE',
-        phoneNumber: '+919811234567',
-        village: 'Kashti',
-        subCentre: 'Kashti Sub-Centre',
-        district: 'Pune Rural',
-        assignedAsha: 'Sunita Tai Gaikwad',
-        isPregnant: false,
-        chronicConditions: ['TYPE_2_DIABETES', 'HYPERTENSION'],
-        allergies: [],
-        emergencyContact: const EmergencyContactDto(
-          name: 'Sunita Jadhav',
-          relationship: 'WIFE',
-          phoneNumber: '+919811234568',
-        ),
-        latestVitals: VitalsDto(
-          id: 'vit-002',
-          patientId: 'pat-002',
-          recordedById: 'asha-904',
-          recordedByRole: 'HEALTH_WORKER',
-          recordedAt: DateTime.now().subtract(const Duration(days: 1)),
-          systolicBp: 155,
-          diastolicBp: 92,
-          pulse: 78,
-          spO2: 97,
-          temperature: 98.4,
-          bloodSugar: 210,
-          haemoglobin: 13.2,
-        ),
-      ),
-    ];
+    _patients = [];
+    _activePatient = null;
+  }
+
+  void setActivePatient(PatientDto? patient) {
+    _activePatient = patient;
+    notifyListeners();
+  }
+
+  void selectPatientById(String id) {
+    try {
+      _activePatient = _patients.firstWhere((p) => p.id == id);
+      notifyListeners();
+    } catch (_) {}
   }
 
   Future<void> updateVitals(String patientId, VitalsDto newVitals) async {
@@ -206,6 +259,7 @@ class PatientRepository extends ChangeNotifier {
 
   void addPatient(PatientDto patient) {
     _patients.insert(0, patient);
+    _activePatient = patient;
     if (_cache.isOffline) {
       _cache.queueMutation('PATIENT', 'CREATE', patient.toJson());
     } else {
@@ -282,5 +336,19 @@ class PatientRepository extends ChangeNotifier {
       }
       notifyListeners();
     }
+  }
+
+  PatientDto? getPatientById(String id) {
+    try {
+      return _patients.firstWhere((p) => p.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void resetToDefaults() {
+    _patients = [];
+    _activePatient = null;
+    notifyListeners();
   }
 }

@@ -3,6 +3,8 @@ import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:ruralcare/data/repositories/referral_repository.dart';
 import 'package:ruralcare/data/models/referral_dto.dart';
+import 'package:ruralcare/data/repositories/doctor_repository.dart';
+import 'package:ruralcare/app/routes.dart';
 import 'health_worker_followup_screen.dart';
 
 class HealthWorkerReferralScreen extends StatefulWidget {
@@ -26,12 +28,35 @@ class _HealthWorkerReferralScreenState extends State<HealthWorkerReferralScreen>
   Widget build(BuildContext context) {
     final refRepo = ReferralRepository();
     final cache = LocalCacheService();
+    final session = SessionCoordinator();
 
     return ListenableBuilder(
-      listenable: Listenable.merge([refRepo, cache]),
+      listenable: Listenable.merge([refRepo, cache, session]),
       builder: (context, _) {
         final allReferrals = refRepo.referrals;
-        final primaryReferral = allReferrals.isNotEmpty ? allReferrals.first : null;
+        final actionRequiredList = allReferrals.where((r) =>
+            r.status == 'CREATED' ||
+            r.status == 'REFERRED' ||
+            r.status == 'HOSPITAL_NOTIFIED' ||
+            r.status == 'TRIAGED').toList();
+
+        final acceptedList = allReferrals.where((r) =>
+            r.status == 'ACCEPTED' ||
+            r.status == 'IN_TRANSIT' ||
+            r.status == 'ARRIVED' ||
+            r.status == 'ADMITTED').toList();
+
+        List<ReferralDto> displayedReferrals = allReferrals;
+        if (_selectedFilter == 'Action Required') {
+          displayedReferrals = actionRequiredList;
+        } else if (_selectedFilter == 'Accepted') {
+          displayedReferrals = acceptedList;
+        }
+
+        final primaryReferral = displayedReferrals.isNotEmpty ? displayedReferrals.first : null;
+        final secondaryReferrals = displayedReferrals.skip(1).toList();
+        final isHi = session.isHindi;
+        final isMr = session.isMarathi;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -50,10 +75,14 @@ class _HealthWorkerReferralScreenState extends State<HealthWorkerReferralScreen>
                   children: [
                     const Icon(Icons.cloud_done_outlined, size: 16, color: AppColors.navyBlue),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Offline Ready • Referral tracking synced locally',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.navyBlue),
+                        isHi
+                            ? 'ऑफ़लाइन तैयार • स्थानीय रूप से समन्वयित'
+                            : (isMr
+                                ? 'ऑफलाइन तयार • स्थानिक पातळीवर समक्रमित'
+                                : 'Offline Ready • Referral tracking synced locally'),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.navyBlue),
                       ),
                     ),
                     Container(
@@ -62,9 +91,9 @@ class _HealthWorkerReferralScreenState extends State<HealthWorkerReferralScreen>
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        'Live Sync',
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.forestTeal),
+                      child: Text(
+                        isHi ? 'लाइव सिंक' : (isMr ? 'थेट समक्रमण' : 'Live Sync'),
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.forestTeal),
                       ),
                     ),
                   ],
@@ -86,23 +115,29 @@ class _HealthWorkerReferralScreenState extends State<HealthWorkerReferralScreen>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Referral Coordination',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                          isHi ? 'रेफरल समन्वय' : (isMr ? 'संदर्भ समन्वय' : 'Referral Coordination'),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          'रेफरल समन्वय एवं प्रगति ट्रैकिंग',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.forestTeal),
+                          isHi
+                              ? 'रेफरल समन्वय एवं प्रगति ट्रैकिंग'
+                              : (isMr ? 'संदर्भ समन्वय आणि प्रगती ट्रॅकिंग' : 'Referral coordination & tracking'),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.forestTeal),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          'Track and coordinate patient referrals to higher facilities',
-                          style: TextStyle(fontSize: 11, color: AppColors.slateGray),
+                          isHi
+                              ? 'उच्च सुविधाओं के लिए मरीज़ रेफरल को ट्रैक और समन्वयित करें'
+                              : (isMr
+                                  ? 'उच्च सुविधांसाठी रुग्ण संदर्भ ट्रॅक आणि समन्वयित करा'
+                                  : 'Track and coordinate patient referrals to higher facilities'),
+                          style: const TextStyle(fontSize: 11, color: AppColors.slateGray),
                         ),
                       ],
                     ),
@@ -115,11 +150,11 @@ class _HealthWorkerReferralScreenState extends State<HealthWorkerReferralScreen>
               // 3. Filter Chips (All, Action Required, Accepted)
               Row(
                 children: [
-                  _filterChip('All (${allReferrals.length})', 'All'),
+                  _filterChip(isHi ? 'सभी (${allReferrals.length})' : (isMr ? 'सर्व (${allReferrals.length})' : 'All (${allReferrals.length})'), 'All'),
                   const SizedBox(width: 8),
-                  _filterChip('● Action Required (1)', 'Action Required', isAlert: true),
+                  _filterChip(isHi ? '● कार्रवाई आवश्यक (${actionRequiredList.length})' : (isMr ? '● कृती आवश्यक (${actionRequiredList.length})' : '● Action Required (${actionRequiredList.length})'), 'Action Required', isAlert: true),
                   const SizedBox(width: 8),
-                  _filterChip('Accepted (1)', 'Accepted'),
+                  _filterChip(isHi ? 'स्वीकृत (${acceptedList.length})' : (isMr ? 'स्वीकृत (${acceptedList.length})' : 'Accepted (${acceptedList.length})'), 'Accepted'),
                 ],
               ),
 
@@ -127,23 +162,54 @@ class _HealthWorkerReferralScreenState extends State<HealthWorkerReferralScreen>
 
               // 4. Primary Active Referral Tracking Card
               if (primaryReferral != null)
-                _buildActiveReferralCard(context, refRepo, primaryReferral),
-
-              const SizedBox(height: 20),
+                _buildActiveReferralCard(context, refRepo, primaryReferral)
+              else
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.neutral300),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.swap_calls_rounded, size: 36, color: AppColors.slateGray),
+                      const SizedBox(height: 8),
+                      Text(
+                        isHi ? 'इस श्रेणी में कोई रेफरल नहीं है' : (isMr ? 'या श्रेणीत कोणतेही संदर्भ नाहीत' : 'No Referrals in this Category'),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isHi ? 'अन्य फिल्टर चुनकर रेफरल देखें।' : (isMr ? 'इतर फिल्टर निवडून संदर्भ पहा.' : 'Select another filter to view active referrals.'),
+                        style: const TextStyle(fontSize: 12, color: AppColors.slateGray),
+                      ),
+                    ],
+                  ),
+                ),
 
               // 5. Other Active Referrals Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Other Active Referrals', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkSlate)),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('View All', style: TextStyle(fontSize: 12, color: AppColors.forestTeal, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-
-              ...allReferrals.skip(1).map((r) => _buildSecondaryReferralRow(context, r)),
+              if (secondaryReferrals.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isHi ? 'अन्य सक्रिय रेफरल' : (isMr ? 'इतर सक्रिय संदर्भ' : 'Other Active Referrals'),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(() => _selectedFilter = 'All'),
+                      child: Text(
+                        isHi ? 'सभी देखें' : (isMr ? 'सर्व पहा' : 'View All'),
+                        style: const TextStyle(fontSize: 12, color: AppColors.forestTeal, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                ...secondaryReferrals.map((r) => _buildSecondaryReferralRow(context, r)),
+              ],
 
               const SizedBox(height: 24),
             ],
@@ -267,10 +333,10 @@ class _HealthWorkerReferralScreenState extends State<HealthWorkerReferralScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
+                    const Row(
                       children: [
                         Icon(Icons.event_note_outlined, size: 12, color: AppColors.forestTeal),
                         SizedBox(width: 4),
@@ -278,8 +344,8 @@ class _HealthWorkerReferralScreenState extends State<HealthWorkerReferralScreen>
                       ],
                     ),
                     Text(
-                      'Dr. Anita Roy (MO, PHC Rampur)',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                      ref.doctorName.isNotEmpty ? ref.doctorName : '${DoctorRepository().getDoctorForSession(SessionCoordinator()).name} (${DoctorRepository().getDoctorForSession(SessionCoordinator()).facilityName})',
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.darkSlate),
                     ),
                   ],
                 ),
@@ -364,7 +430,7 @@ class _HealthWorkerReferralScreenState extends State<HealthWorkerReferralScreen>
           const SizedBox(height: 10),
 
           // 5-Stage Stepper
-          _stepperStep(number: 1, title: '1. Referral Created', subtitle: '11 Oct • Handed by Dr. Anita Roy', isDone: true),
+          _stepperStep(number: 1, title: '1. Referral Created', subtitle: 'Handed by ${ref.doctorName.isNotEmpty ? ref.doctorName : DoctorRepository().getDoctorForSession(SessionCoordinator()).name}', isDone: true),
           _stepperStep(number: 2, title: '2. Sent to Facility', subtitle: '11 Oct 16:40 • Tele-consult registry', isDone: true),
           _stepperStep(number: 3, title: '3. Accepted by Facility', subtitle: '12 Oct • Bilaspur Central OPD Desk', isDone: true, badge: 'Confirmed'),
           _stepperStep(number: 4, title: '4. Appointment & Visit', subtitle: 'Scheduled for Friday, 18 Oct 2024\nField follow-up reminder pending', isCurrent: true),

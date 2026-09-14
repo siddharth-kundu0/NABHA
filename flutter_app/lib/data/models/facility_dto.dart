@@ -49,6 +49,7 @@ class FacilityDto {
   }
 
   String get typeDisplay => typeLabel;
+  Map<String, int> get bloodBankStock => availableBloodUnits;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -84,3 +85,225 @@ class FacilityDto {
         hasAmbulanceAvailable: json['hasAmbulanceAvailable'] as bool? ?? false,
       );
 }
+
+enum FacilityStaffRole {
+  facilityAdmin,
+  pharmacist,
+  labTechnician,
+  staffNurse,
+  receptionClerk;
+
+  String get displayName {
+    switch (this) {
+      case FacilityStaffRole.facilityAdmin:
+        return 'Facility Administrator (Medical Superintendent)';
+      case FacilityStaffRole.pharmacist:
+        return 'Registered Pharmacist (Dispensary)';
+      case FacilityStaffRole.labTechnician:
+        return 'Lab Technician (Diagnostics & Pathology)';
+      case FacilityStaffRole.staffNurse:
+        return 'Staff Nurse (Inpatient Wards & Triage)';
+      case FacilityStaffRole.receptionClerk:
+        return 'Reception & Referral Intake Clerk';
+    }
+  }
+
+  String get shortName {
+    switch (this) {
+      case FacilityStaffRole.facilityAdmin:
+        return 'Facility Admin';
+      case FacilityStaffRole.pharmacist:
+        return 'Pharmacist';
+      case FacilityStaffRole.labTechnician:
+        return 'Lab Technician';
+      case FacilityStaffRole.staffNurse:
+        return 'Staff Nurse';
+      case FacilityStaffRole.receptionClerk:
+        return 'Intake Clerk';
+    }
+  }
+
+  String get defaultDepartment {
+    switch (this) {
+      case FacilityStaffRole.facilityAdmin:
+        return 'Hospital Administration & Superintendent Office';
+      case FacilityStaffRole.pharmacist:
+        return 'Pharmacy Dispensary & Drug Stores';
+      case FacilityStaffRole.labTechnician:
+        return 'Central Diagnostic & Pathology Lab';
+      case FacilityStaffRole.staffNurse:
+        return 'Inpatient Wards & Emergency Triage';
+      case FacilityStaffRole.receptionClerk:
+        return 'Patient Registration & 108 Intake Desk';
+    }
+  }
+}
+
+enum FacilityApprovalStatus {
+  pendingFacilityAdmin,
+  pendingDistrictAdmin,
+  approved,
+  rejected;
+
+  String get label {
+    switch (this) {
+      case FacilityApprovalStatus.pendingFacilityAdmin:
+        return 'Pending Facility Admin Approval';
+      case FacilityApprovalStatus.pendingDistrictAdmin:
+        return 'Pending District Admin Approval';
+      case FacilityApprovalStatus.approved:
+        return 'Approved & Active';
+      case FacilityApprovalStatus.rejected:
+        return 'Application Rejected';
+    }
+  }
+}
+
+class FacilityStaffRequestDto {
+  final String id;
+  final String facilityId;
+  final String facilityName;
+  final String staffName;
+  final String mobile;
+  final FacilityStaffRole role;
+  final String licenseOrEmployeeId;
+  final String department;
+  final FacilityApprovalStatus status;
+  final DateTime submittedAt;
+  final String? assignedRoom;
+  final String? rejectionReason;
+
+  const FacilityStaffRequestDto({
+    required this.id,
+    required this.facilityId,
+    required this.facilityName,
+    required this.staffName,
+    required this.mobile,
+    required this.role,
+    required this.licenseOrEmployeeId,
+    required this.department,
+    required this.status,
+    required this.submittedAt,
+    this.assignedRoom,
+    this.rejectionReason,
+  });
+
+  FacilityStaffRequestDto copyWith({
+    String? id,
+    String? facilityId,
+    String? facilityName,
+    String? staffName,
+    String? mobile,
+    FacilityStaffRole? role,
+    String? licenseOrEmployeeId,
+    String? department,
+    FacilityApprovalStatus? status,
+    DateTime? submittedAt,
+    String? assignedRoom,
+    String? rejectionReason,
+  }) {
+    return FacilityStaffRequestDto(
+      id: id ?? this.id,
+      facilityId: facilityId ?? this.facilityId,
+      facilityName: facilityName ?? this.facilityName,
+      staffName: staffName ?? this.staffName,
+      mobile: mobile ?? this.mobile,
+      role: role ?? this.role,
+      licenseOrEmployeeId: licenseOrEmployeeId ?? this.licenseOrEmployeeId,
+      department: department ?? this.department,
+      status: status ?? this.status,
+      submittedAt: submittedAt ?? this.submittedAt,
+      assignedRoom: assignedRoom ?? this.assignedRoom,
+      rejectionReason: rejectionReason ?? this.rejectionReason,
+    );
+  }
+}
+
+class PrescriptionOrderDto {
+  final String id;
+  final String patientName;
+  final String patientRuralCareId;
+  final String doctorName;
+  final List<String> prescribedMedicines;
+  final String dosageInstructions;
+  final String status; // PENDING, DISPENSED
+  final DateTime orderedAt;
+
+  const PrescriptionOrderDto({
+    required this.id,
+    required this.patientName,
+    required this.patientRuralCareId,
+    required this.doctorName,
+    required this.prescribedMedicines,
+    required this.dosageInstructions,
+    required this.status,
+    required this.orderedAt,
+  });
+
+  PrescriptionOrderDto copyWith({
+    String? id,
+    String? patientName,
+    String? patientRuralCareId,
+    String? doctorName,
+    List<String>? prescribedMedicines,
+    String? dosageInstructions,
+    String? status,
+    DateTime? orderedAt,
+  }) {
+    return PrescriptionOrderDto(
+      id: id ?? this.id,
+      patientName: patientName ?? this.patientName,
+      patientRuralCareId: patientRuralCareId ?? this.patientRuralCareId,
+      doctorName: doctorName ?? this.doctorName,
+      prescribedMedicines: prescribedMedicines ?? this.prescribedMedicines,
+      dosageInstructions: dosageInstructions ?? this.dosageInstructions,
+      status: status ?? this.status,
+      orderedAt: orderedAt ?? this.orderedAt,
+    );
+  }
+}
+
+class DiagnosticOrderDto {
+  final String id;
+  final String patientName;
+  final String patientRuralCareId;
+  final String testName;
+  final String urgency; // Routine, Priority, Urgent
+  final String status; // ORDERED, SAMPLE_COLLECTED, ANALYZING, COMPLETED
+  final String? resultValue;
+  final DateTime orderedAt;
+
+  const DiagnosticOrderDto({
+    required this.id,
+    required this.patientName,
+    required this.patientRuralCareId,
+    required this.testName,
+    required this.urgency,
+    required this.status,
+    this.resultValue,
+    required this.orderedAt,
+  });
+
+  DiagnosticOrderDto copyWith({
+    String? id,
+    String? patientName,
+    String? patientRuralCareId,
+    String? testName,
+    String? urgency,
+    String? status,
+    String? resultValue,
+    DateTime? orderedAt,
+  }) {
+    return DiagnosticOrderDto(
+      id: id ?? this.id,
+      patientName: patientName ?? this.patientName,
+      patientRuralCareId: patientRuralCareId ?? this.patientRuralCareId,
+      testName: testName ?? this.testName,
+      urgency: urgency ?? this.urgency,
+      status: status ?? this.status,
+      resultValue: resultValue ?? this.resultValue,
+      orderedAt: orderedAt ?? this.orderedAt,
+    );
+  }
+}
+

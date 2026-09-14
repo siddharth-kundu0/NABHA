@@ -8,7 +8,7 @@ import 'package:ruralcare/features/auth/screens/onboarding_screen.dart';
 import 'package:ruralcare/features/patient/screens/patient_nav_shell.dart';
 import 'package:ruralcare/features/health_worker/screens/health_worker_dashboard_screen.dart';
 import 'package:ruralcare/features/doctor/screens/doctor_dashboard_screen.dart';
-import 'package:ruralcare/features/facility/screens/facility_operations_screen.dart';
+import 'package:ruralcare/features/facility/screens/facility_dashboard_screen.dart';
 import 'package:ruralcare/features/admin/screens/district_analytics_screen.dart';
 
 class RuralCareAppShell extends StatelessWidget {
@@ -37,7 +37,7 @@ class RuralCareAppShell extends StatelessWidget {
             currentRoleView = const DoctorDashboardScreen();
             break;
           case AppRole.facilityStaff:
-            currentRoleView = const FacilityOperationsScreen();
+            currentRoleView = const FacilityDashboardScreen();
             break;
           case AppRole.admin:
             currentRoleView = const DistrictAnalyticsScreen();
@@ -55,7 +55,7 @@ class RuralCareAppShell extends StatelessWidget {
             // Floating interactive Role Switcher for pairwise demo evaluation
             Positioned(
               right: 16,
-              bottom: session.activeRole == AppRole.patient ? 96 : 32,
+              bottom: session.activeRole != AppRole.admin ? 84 : 24,
               child: Material(
                 elevation: 6,
                 borderRadius: BorderRadius.circular(30),

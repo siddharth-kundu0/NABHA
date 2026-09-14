@@ -4,6 +4,8 @@ import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/models/vitals_dto.dart';
+import 'package:ruralcare/app/routes.dart';
+import '../utils/health_worker_strings.dart';
 import 'health_worker_followup_screen.dart';
 
 class HealthWorkerPatientDirectory extends StatefulWidget {
@@ -28,10 +30,12 @@ class _HealthWorkerPatientDirectoryState extends State<HealthWorkerPatientDirect
   Widget build(BuildContext context) {
     final patientRepo = PatientRepository();
     final cache = LocalCacheService();
+    final session = SessionCoordinator();
 
     return ListenableBuilder(
-      listenable: Listenable.merge([patientRepo, cache]),
+      listenable: Listenable.merge([patientRepo, cache, session]),
       builder: (context, _) {
+        final strings = HealthWorkerStrings.of(session);
         final allPatients = patientRepo.patients;
         final query = _searchCtrl.text.trim().toLowerCase();
 
@@ -81,18 +85,18 @@ class _HealthWorkerPatientDirectoryState extends State<HealthWorkerPatientDirect
                       children: [
                         Row(
                           children: [
-                            const Text(
-                              'Patient Directory',
-                              style: TextStyle(
+                            Text(
+                              strings.patientDirectoryTitle,
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.darkSlate,
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Text(
-                              'मरीज़ खोजें',
-                              style: TextStyle(
+                            Text(
+                              strings.searchPatientHeaderTag,
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.forestTeal,
@@ -125,9 +129,9 @@ class _HealthWorkerPatientDirectoryState extends State<HealthWorkerPatientDirect
                           ],
                         ),
                         const SizedBox(height: 2),
-                        const Text(
-                          'Search assigned patients in PHC Rampur catchment',
-                          style: TextStyle(fontSize: 11, color: AppColors.slateGray),
+                        Text(
+                          strings.patientDirectorySubtitle,
+                          style: const TextStyle(fontSize: 11, color: AppColors.slateGray),
                         ),
                       ],
                     ),
@@ -156,7 +160,7 @@ class _HealthWorkerPatientDirectoryState extends State<HealthWorkerPatientDirect
                   onChanged: (_) => setState(() {}),
                   style: const TextStyle(fontSize: 13, color: AppColors.darkSlate),
                   decoration: InputDecoration(
-                    hintText: 'Search by Name, RuralCare ID, or Mobile...',
+                    hintText: strings.searchPlaceholder,
                     hintStyle: const TextStyle(fontSize: 12, color: AppColors.slateGray),
                     prefixIcon: const Icon(Icons.search_rounded, color: AppColors.slateGray, size: 20),
                     suffixIcon: _searchCtrl.text.isNotEmpty
@@ -180,12 +184,17 @@ class _HealthWorkerPatientDirectoryState extends State<HealthWorkerPatientDirect
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: ['All', 'High Risk', 'ANC', 'Due Today'].map((filter) {
-                    final isSel = _selectedFilter == filter;
+                  children: [
+                    {'key': 'All', 'label': strings.filterAll},
+                    {'key': 'High Risk', 'label': strings.filterHighRisk},
+                    {'key': 'ANC', 'label': strings.filterAnc},
+                    {'key': 'Due Today', 'label': strings.filterDueToday},
+                  ].map((filter) {
+                    final isSel = _selectedFilter == filter['key'];
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
-                        label: Text(filter),
+                        label: Text(filter['label']!),
                         labelStyle: TextStyle(
                           fontSize: 11,
                           fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
@@ -199,7 +208,7 @@ class _HealthWorkerPatientDirectoryState extends State<HealthWorkerPatientDirect
                         ),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         onSelected: (val) {
-                          if (val) setState(() => _selectedFilter = filter);
+                          if (val) setState(() => _selectedFilter = filter['key']!);
                         },
                       ),
                     );
@@ -215,13 +224,19 @@ class _HealthWorkerPatientDirectoryState extends State<HealthWorkerPatientDirect
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 36),
                   alignment: Alignment.center,
-                  child: const Column(
+                  child: Column(
                     children: [
-                      Icon(Icons.search_off_rounded, size: 40, color: AppColors.slateGray),
-                      SizedBox(height: 8),
-                      Text('No matching patients found', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkSlate)),
-                      SizedBox(height: 4),
-                      Text('Try adjusting your search criteria', style: TextStyle(fontSize: 12, color: AppColors.slateGray)),
+                      const Icon(Icons.search_off_rounded, size: 40, color: AppColors.slateGray),
+                      const SizedBox(height: 8),
+                      Text(
+                        strings.isHi ? 'कोई मेल खाने वाला मरीज़ नहीं मिला' : (strings.isMr ? 'कोणताही जुळणारा रुग्ण आढळला नाही' : 'No matching patients found'),
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkSlate),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        strings.isHi ? 'अपने खोज मानदंड समायोजित करने का प्रयास करें' : (strings.isMr ? 'आपले शोध निकष समायोजित करण्याचा प्रयत्न करा' : 'Try adjusting your search criteria'),
+                        style: const TextStyle(fontSize: 12, color: AppColors.slateGray),
+                      ),
                     ],
                   ),
                 )

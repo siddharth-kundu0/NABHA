@@ -24,7 +24,20 @@ class _MaternalCareScreenState extends State<MaternalCareScreen> {
   @override
   Widget build(BuildContext context) {
     final patientRepo = PatientRepository();
-    final patient = patientRepo.defaultPatient;
+    final patient = patientRepo.defaultPatient ?? patientRepo.activePatient;
+    if (patient == null) {
+      return Scaffold(
+        backgroundColor: RuralCareColors.canvas,
+        appBar: AppBar(
+          title: const Text('Maternal care (ANC)', style: AppTypography.pageTitle),
+          backgroundColor: RuralCareColors.surface,
+          elevation: 0,
+        ),
+        body: const Center(
+          child: Text('No maternal beneficiary selected. Please select a registered mother.'),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: RuralCareColors.canvas,
