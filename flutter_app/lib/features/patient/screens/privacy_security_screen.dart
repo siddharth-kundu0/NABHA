@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
@@ -855,21 +854,6 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                         ),
                       ),
                     ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Role Switcher Tile for Testing Demo
-                Center(
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                    label: Text(
-                      'Testing Persona: ${session.activeRole.name}',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-                    ),
-                    onPressed: () => DemoRoleSwitcher.show(context),
                   ),
                 ),
 

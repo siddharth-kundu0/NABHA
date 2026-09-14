@@ -700,6 +700,7 @@ class _DoctorQueueTabState extends State<DoctorQueueTab> {
                           height: 44,
                           child: ElevatedButton.icon(
                             onPressed: () {
+                              AppointmentRepository().updateAppointmentStatus(apt.id, 'IN_PROGRESS');
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (ctx) => LiveTeleconsultRoomScreen(

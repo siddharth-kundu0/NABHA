@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'package:ruralcare/features/facility/utils/facility_strings.dart';
 import 'package:ruralcare/data/models/facility_dto.dart';
@@ -318,11 +317,6 @@ class _FacilityDashboardScreenState extends State<FacilityDashboardScreen> {
                 },
               ),
 
-              IconButton(
-                icon: const Icon(Icons.swap_horiz_rounded, color: RuralCareColors.textSecondary),
-                tooltip: 'Switch system role',
-                onPressed: () => DemoRoleSwitcher.show(context),
-              ),
               const SizedBox(width: 8),
             ],
             bottom: const PreferredSize(

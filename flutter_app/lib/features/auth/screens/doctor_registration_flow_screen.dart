@@ -126,20 +126,7 @@ class _DoctorRegistrationFlowScreenState extends State<DoctorRegistrationFlowScr
     }
   }
 
-  void _simulateFacilityAcceptance() {
-    if (_activeRequest == null) return;
-    final accepted = DoctorRepository().acceptVerificationRequest(
-      _activeRequest!.id,
-      reviewedBy: 'Sister Sarita Patil, RN (Admin)',
-    );
-    if (accepted != null) {
-      setState(() {
-        _activeRequest = accepted;
-        _otpCtrl.text = accepted.tempOtp ?? '849201';
-        _step = 3; // OTP verification
-      });
-    }
-  }
+
 
   void _verifyOtp() {
     final otp = _otpCtrl.text.trim();
@@ -600,53 +587,14 @@ class _DoctorRegistrationFlowScreenState extends State<DoctorRegistrationFlowScr
         SizedBox(
           width: double.infinity,
           height: 52,
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF0A6B56)),
-            label: const Text('Check Approval Status', style: AppTypography.button),
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            label: const Text('Check Approval Status', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
             onPressed: _checkStatus,
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF0A6B56), width: 1.5),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0A6B56),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // Instant Acceptance Button for pairwise review
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE8F5F2),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF0A6B56).withOpacity(0.3)),
-          ),
-          child: Column(
-            children: [
-              Text(
-                'Facility Administration Desk Integration:',
-                style: AppTypography.supporting.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Facility administrators can review this in the "Staff & Doctor Approvals" tab in Facility Profile.',
-                style: AppTypography.supporting.copyWith(fontSize: 11),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.verified_user_outlined, size: 18),
-                  label: const Text('Accept & Generate Doctor ID Now', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0A6B56),
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: _simulateFacilityAcceptance,
-                ),
-              ),
-            ],
           ),
         ),
       ],

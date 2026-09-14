@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ruralcare/core/theme/app_theme.dart';
 import 'package:ruralcare/core/theme/offline_status_bar.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/app/routes.dart';
 
 import 'package:ruralcare/features/auth/screens/onboarding_screen.dart';
@@ -44,46 +42,10 @@ class RuralCareAppShell extends StatelessWidget {
             break;
         }
 
-        return Stack(
+        return Column(
           children: [
-            Column(
-              children: [
-                const OfflineStatusBar(),
-                Expanded(child: currentRoleView),
-              ],
-            ),
-            // Floating interactive Role Switcher for pairwise demo evaluation
-            Positioned(
-              right: 16,
-              bottom: session.activeRole != AppRole.admin ? 84 : 24,
-              child: Material(
-                elevation: 6,
-                borderRadius: BorderRadius.circular(30),
-                color: AppColors.forestTealDark,
-                child: InkWell(
-                  onTap: () => DemoRoleSwitcher.show(context),
-                  borderRadius: BorderRadius.circular(30),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: Colors.white24, width: 1.5),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 20),
-                        const SizedBox(width: 6),
-                        Text(
-                          session.activeRole.name.toUpperCase(),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            const OfflineStatusBar(),
+            Expanded(child: currentRoleView),
           ],
         );
       },

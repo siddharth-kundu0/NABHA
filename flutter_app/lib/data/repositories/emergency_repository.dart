@@ -3,6 +3,8 @@ import 'package:ruralcare/data/models/emergency_event_dto.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:ruralcare/data/repositories/patient_repository.dart';
+
 class EmergencyRepository extends ChangeNotifier {
   static final EmergencyRepository _instance = EmergencyRepository._internal();
   factory EmergencyRepository() => _instance;
@@ -15,11 +17,25 @@ class EmergencyRepository extends ChangeNotifier {
   bool get hasActiveAlert => _activeEvent != null && _activeEvent!.status == 'ACTIVE';
   bool get hasActiveEmergency => hasActiveAlert;
 
-  void triggerSos({required String patientId, required String location}) {
+  void triggerSos({
+    required String patientId,
+    required String location,
+    String? patientName,
+    String? assignedFacilityName,
+  }) {
+    String resolvedName = patientName ?? '';
+    String resolvedFacility = assignedFacilityName ?? '';
+    if (resolvedName.isEmpty || resolvedFacility.isEmpty) {
+      final patient = PatientRepository().findPatientByMobileOrId(patientId) ??
+          PatientRepository().activePatient;
+      if (resolvedName.isEmpty) resolvedName = patient?.fullName ?? 'Citizen ($patientId)';
+      if (resolvedFacility.isEmpty) resolvedFacility = patient?.subCentre ?? 'Emergency Response Center';
+    }
+
     triggerEmergency(
       patientId: patientId,
-      patientName: 'Kavita Rajesh Devi',
-      assignedFacilityName: 'Baramati Sub-District Hospital',
+      patientName: resolvedName,
+      assignedFacilityName: resolvedFacility,
     );
   }
 

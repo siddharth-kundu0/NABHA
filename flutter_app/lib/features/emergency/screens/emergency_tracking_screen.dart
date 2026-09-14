@@ -352,12 +352,15 @@ class _EmergencyTrackingScreenState extends State<EmergencyTrackingScreen> {
             height: 52,
             child: OutlinedButton.icon(
               onPressed: () {
+                final facilityName = patient.subCentre.isNotEmpty ? patient.subCentre : 'Emergency Dispatch';
                 emergRepo.triggerSos(
                   patientId: patient.id,
-                  location: _shareLocation ? 'Kashti Sector 3 (18.618° N, 74.571° E)' : 'Location withheld',
+                  patientName: patient.fullName,
+                  assignedFacilityName: facilityName,
+                  location: _shareLocation ? 'Patient Registered GPS Location' : 'Location withheld',
                 );
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Emergency alert dispatched to Baramati SDH.')),
+                  SnackBar(content: Text('Emergency alert dispatched to $facilityName.')),
                 );
               },
               icon: const Icon(Icons.emergency_outlined, size: 20),

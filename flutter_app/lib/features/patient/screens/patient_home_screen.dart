@@ -55,8 +55,18 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         }
 
         final vitals = patient.latestVitals;
-        final upcomingApt = aptRepo.appointments.where((a) => a.patientId == patient.id && a.status != 'COMPLETED' && a.status != 'CANCELLED').isNotEmpty
-            ? aptRepo.appointments.firstWhere((a) => a.patientId == patient.id && a.status != 'COMPLETED' && a.status != 'CANCELLED')
+        final patientAppts = aptRepo.getAppointmentsForPatient(
+          patient,
+          sessionUid: session.currentUserId,
+          displayName: session.userDisplayName,
+        );
+        final activeCall = aptRepo.getActiveCallForPatient(
+          patient,
+          sessionUid: session.currentUserId,
+          displayName: session.userDisplayName,
+        );
+        final upcomingApt = patientAppts.where((a) => a.status != 'COMPLETED' && a.status != 'CANCELLED').isNotEmpty
+            ? patientAppts.firstWhere((a) => a.status != 'COMPLETED' && a.status != 'CANCELLED')
             : null;
         final activeRef = refRepo.referrals.where((r) => r.patientId == patient.id && r.status != 'CLOSED').isNotEmpty
             ? refRepo.referrals.firstWhere((r) => r.patientId == patient.id && r.status != 'CLOSED')
@@ -77,6 +87,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Live Teleconsultation Incoming Call Banner
+                        if (activeCall != null)
+                          _buildActiveCallBanner(context, activeCall, patient, session, strings),
+
                         // 2. Next Care Card (Single primary action per section)
                         _buildNextCareCard(context, patient, upcomingApt, session, strings),
 
@@ -268,6 +282,136 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
+  /// Prominent Live Teleconsultation Calling Banner
+  Widget _buildActiveCallBanner(
+    BuildContext context,
+    AppointmentDto activeCall,
+    PatientDto patient,
+    SessionCoordinator session,
+    PatientStrings strings,
+  ) {
+    final isHi = session.isHi;
+    final isMr = session.isMr;
+    final title = isHi
+        ? 'डॉक्टर से लाइव वीडियो कॉल जारी है'
+        : (isMr ? 'डॉक्टरांशी थेट व्हिडिओ कॉल सुरू आहे' : 'Live Doctor Teleconsultation Call');
+    final subtitle = isHi
+        ? '${activeCall.doctorName} (${activeCall.specialty}) वीडियो कॉल में आपकी प्रतीक्षा कर रहे हैं।'
+        : (isMr
+            ? '${activeCall.doctorName} (${activeCall.specialty}) व्हिडिओ कॉलमध्ये आपली वाट पाहत आहेत.'
+            : '${activeCall.doctorName} (${activeCall.specialty}) is waiting in the video room.');
+    final buttonText = isHi ? 'वीडियो कॉल में अभी जुड़ें' : (isMr ? 'व्हिडिओ कॉलमध्ये आत्ताच सामील व्हा' : 'Join Video Call Now');
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
+        boxShadow: const [
+          BoxShadow(color: Color(0x1215803D), blurRadius: 10, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF16A34A),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.videocam_rounded, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFDC2626),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isHi ? 'लाइव परामर्श सक्रिय' : (isMr ? 'थेट सल्लामसलत सुरू' : 'LIVE CONSULTATION ACTIVE'),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF15803D),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF14532D),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF166534),
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (ctx) => LiveTeleconsultRoomScreen(
+                      patientName: patient.fullName,
+                      doctorName: activeCall.doctorName,
+                      specialty: activeCall.specialty,
+                      appointmentId: activeCall.id,
+                      facilityName: activeCall.facilityName,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.videocam_rounded, size: 18),
+              label: Text(buttonText, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Next Care Card per DESIGN.md Section 6:
   /// The most relevant appointment or follow-up with one clear action.
   /// White fill, 1px border (#DCE4ED), radius 16, no shadow.
@@ -326,6 +470,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     }
 
     final isTeleconsult = upcomingApt.type == 'TELECONSULTATION';
+    final isCallActive = upcomingApt.status == 'IN_PROGRESS' || upcomingApt.status == 'CALLING';
 
     return Container(
       width: double.infinity,
@@ -347,16 +492,27 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: AppDecorations.statusBadge(
-                  background: RuralCareColors.primarySoft,
+                  background: isCallActive ? const Color(0xFFDCFCE7) : RuralCareColors.primarySoft,
                 ),
-                child: Text(
-                  strings.confirmed,
-                  style: const TextStyle(
-                    fontFamily: AppTypography.fontFamily,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: RuralCareColors.primary,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isCallActive) ...[
+                      const Icon(Icons.circle, size: 6, color: Color(0xFF16A34A)),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      isCallActive
+                          ? (session.isHi ? 'कॉल जारी है' : (session.isMr ? 'कॉल सुरू आहे' : 'CALL ACTIVE'))
+                          : strings.confirmed,
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isCallActive ? const Color(0xFF15803D) : RuralCareColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -396,13 +552,15 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: RuralCareColors.primary,
+                backgroundColor: isCallActive ? const Color(0xFF16A34A) : RuralCareColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
               child: Text(
-                isTeleconsult ? strings.joinTeleconsult : strings.viewArrivalPass,
+                isCallActive
+                    ? (session.isHi ? 'वीडियो कॉल से अभी जुड़ें' : (session.isMr ? 'व्हिडिओ कॉलमध्ये आत्ताच सामील व्हा' : 'Join Video Call Now'))
+                    : (isTeleconsult ? strings.joinTeleconsult : strings.viewArrivalPass),
                 style: AppTypography.button,
               ),
             ),

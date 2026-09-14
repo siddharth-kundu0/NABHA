@@ -130,7 +130,7 @@ class _FacilityStaffApprovalsTabState extends State<FacilityStaffApprovalsTab> {
     final session = SessionCoordinator();
     final facRepo = FacilityRepository();
     final strings = FacilityStrings.of(session);
-    final targetFacId = facRepo.currentFacility.id;
+    final targetFacId = session.assignedFacilityId ?? facRepo.currentFacility.id;
 
     return ListenableBuilder(
       listenable: facRepo,

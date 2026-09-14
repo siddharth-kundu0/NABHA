@@ -150,6 +150,154 @@ class NotificationRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Dispatch notification to Doctor when an appointment is booked
+  void notifyDoctorOfAppointment({
+    required String doctorName,
+    required String patientName,
+    required String time,
+    required String type,
+    required String specialty,
+    required String appointmentId,
+  }) {
+    _notifications.insert(
+      0,
+      NotificationItemDto(
+        id: 'NOTIF-APT-DOC-${DateTime.now().millisecondsSinceEpoch % 100000}',
+        targetRole: AppRole.doctor,
+        title: 'New Appointment: $patientName',
+        bilingualTitle: 'नवीन अपॉइंटमेंट: $patientName',
+        message: '$patientName has booked a $type ($specialty) appointment for $time.',
+        category: NotificationCategory.reminders,
+        timestamp: DateTime.now(),
+        isRead: false,
+        isUrgent: true,
+        actionLabel: 'View Schedule',
+        actionRoute: '/doctor/queue',
+        actionPayload: {'appointmentId': appointmentId},
+      ),
+    );
+    notifyListeners();
+  }
+
+  /// Dispatch notification to Patient when appointment is confirmed
+  void notifyPatientOfAppointment({
+    required String patientName,
+    required String doctorName,
+    required String time,
+    required String type,
+    required String specialty,
+    required String appointmentId,
+  }) {
+    _notifications.insert(
+      0,
+      NotificationItemDto(
+        id: 'NOTIF-APT-PAT-${DateTime.now().millisecondsSinceEpoch % 100000}',
+        targetRole: AppRole.patient,
+        title: 'Appointment Confirmed: $doctorName',
+        bilingualTitle: 'अपॉइंटमेंट निश्चित: $doctorName',
+        message: 'Your $type consultation with $doctorName ($specialty) is confirmed for $time.',
+        category: NotificationCategory.reminders,
+        timestamp: DateTime.now(),
+        isRead: false,
+        isUrgent: false,
+        actionLabel: 'View Details',
+        actionRoute: '/patient/appointments',
+        actionPayload: {'appointmentId': appointmentId},
+      ),
+    );
+    notifyListeners();
+  }
+
+  /// Dispatch urgent incoming call notification to Patient when Doctor starts calling
+  void notifyPatientOfIncomingCall({
+    required String patientName,
+    required String doctorName,
+    required String specialty,
+    required String appointmentId,
+    required String facilityName,
+  }) {
+    _notifications.insert(
+      0,
+      NotificationItemDto(
+        id: 'NOTIF-CALL-${DateTime.now().millisecondsSinceEpoch % 100000}',
+        targetRole: AppRole.patient,
+        title: '📞 Incoming Teleconsultation: $doctorName',
+        bilingualTitle: '📞 थेट व्हिडिओ कॉल: $doctorName',
+        message: '$doctorName ($specialty) is calling you now. Tap to join the live video consultation room.',
+        category: NotificationCategory.alerts,
+        timestamp: DateTime.now(),
+        isRead: false,
+        isUrgent: true,
+        actionLabel: 'Join Video Call',
+        actionRoute: '/teleconsult/room',
+        actionPayload: {
+          'appointmentId': appointmentId,
+          'doctorName': doctorName,
+          'patientName': patientName,
+          'specialty': specialty,
+          'facilityName': facilityName,
+        },
+      ),
+    );
+    notifyListeners();
+  }
+
+  /// Dispatch notification to Doctor when Patient enters waiting room
+  void notifyDoctorOfPatientWaiting({
+    required String doctorName,
+    required String patientName,
+    required String appointmentId,
+    required String specialty,
+  }) {
+    _notifications.insert(
+      0,
+      NotificationItemDto(
+        id: 'NOTIF-WAIT-${DateTime.now().millisecondsSinceEpoch % 100000}',
+        targetRole: AppRole.doctor,
+        title: 'Patient Waiting: $patientName',
+        bilingualTitle: 'रुग्ण प्रतीक्षालयात उपस्थित: $patientName',
+        message: '$patientName is online in the virtual waiting room for $specialty teleconsultation.',
+        category: NotificationCategory.alerts,
+        timestamp: DateTime.now(),
+        isRead: false,
+        isUrgent: true,
+        actionLabel: 'Connect Call',
+        actionRoute: '/teleconsult/room',
+        actionPayload: {
+          'appointmentId': appointmentId,
+          'patientName': patientName,
+        },
+      ),
+    );
+    notifyListeners();
+  }
+
+  /// Dispatch notification to Patient when consultation completes
+  void notifyPatientOfConsultationCompleted({
+    required String patientName,
+    required String doctorName,
+    required String appointmentId,
+  }) {
+    _notifications.insert(
+      0,
+      NotificationItemDto(
+        id: 'NOTIF-END-${DateTime.now().millisecondsSinceEpoch % 100000}',
+        targetRole: AppRole.patient,
+        title: 'Consultation Completed: $doctorName',
+        bilingualTitle: 'सल्लामसलत पूर्ण: $doctorName',
+        message: 'Your teleconsultation with $doctorName has completed. Your digital prescription and clinical summary have been issued.',
+        category: NotificationCategory.reports,
+        timestamp: DateTime.now(),
+        isRead: false,
+        isUrgent: false,
+        actionLabel: 'View Records',
+        actionRoute: '/patient/records',
+        actionPayload: {'appointmentId': appointmentId},
+      ),
+    );
+    notifyListeners();
+  }
+
   void dispatchNotification(NotificationItemDto notification) {
     _notifications.insert(0, notification);
     notifyListeners();

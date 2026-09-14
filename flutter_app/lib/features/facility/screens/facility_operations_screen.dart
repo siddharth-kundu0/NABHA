@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/data/repositories/facility_repository.dart';
 import 'package:ruralcare/data/repositories/referral_repository.dart';
 import 'package:ruralcare/data/models/facility_dto.dart';
@@ -49,13 +48,7 @@ class _FacilityOperationsScreenState extends State<FacilityOperationsScreen> {
                 const Text('Facility Operations & Intake Desk', style: AppTypography.supporting),
               ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.swap_horiz_rounded, color: RuralCareColors.textSecondary),
-                tooltip: 'Switch role',
-                onPressed: () => DemoRoleSwitcher.show(context),
-              ),
-            ],
+
             bottom: const PreferredSize(
               preferredSize: Size.fromHeight(1),
               child: Divider(color: RuralCareColors.border, height: 1),

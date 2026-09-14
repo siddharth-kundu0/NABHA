@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/app/routes.dart';
 
 import 'package:ruralcare/features/admin/widgets/admin_dashboard_tab.dart';
@@ -289,9 +288,32 @@ class _DistrictAnalyticsScreenState extends State<DistrictAnalyticsScreen> {
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.swap_horiz_rounded, color: RuralCareColors.textSecondary),
-          tooltip: 'Switch Demo Role',
-          onPressed: () => DemoRoleSwitcher.show(context),
+          icon: const Icon(Icons.logout_rounded, color: RuralCareColors.textSecondary),
+          tooltip: 'Sign Out',
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Sign Out?'),
+                content: const Text('Are you sure you want to exit the District Administration portal?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      _session.clearAuthenticatedUser();
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    },
+                    child: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
         const SizedBox(width: 8),
       ],

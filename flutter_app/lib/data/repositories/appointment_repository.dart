@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:ruralcare/data/models/appointment_dto.dart';
+import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:ruralcare/app/routes.dart';
+import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/data/repositories/notification_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AppointmentRepository extends ChangeNotifier {
@@ -20,13 +23,55 @@ class AppointmentRepository extends ChangeNotifier {
 
   List<AppointmentDto> get appointments {
     final session = SessionCoordinator();
-    if (session.activeRole == AppRole.patient && session.currentUserId != null) {
-      final userAppts = _appointments.where((a) =>
-          a.patientId == session.currentUserId ||
-          (session.userDisplayName != null && a.patientName == session.userDisplayName)).toList();
+    if (session.activeRole == AppRole.patient) {
+      final patient = PatientRepository().activePatient;
+      final userAppts = getAppointmentsForPatient(
+        patient,
+        sessionUid: session.currentUserId,
+        displayName: session.userDisplayName,
+      );
       if (userAppts.isNotEmpty) return userAppts;
     }
     return _appointments;
+  }
+
+  List<AppointmentDto> getAppointmentsForPatient(
+    PatientDto? patient, {
+    String? sessionUid,
+    String? displayName,
+  }) {
+    if (patient == null && sessionUid == null && displayName == null) {
+      return _appointments;
+    }
+    final cleanPName = patient?.fullName.trim().toLowerCase() ?? '';
+    final cleanDName = displayName?.trim().toLowerCase() ?? '';
+    final pId = patient?.id;
+    final cleanPhone = patient?.phoneNumber.replaceAll(RegExp(r'\D'), '') ?? '';
+
+    return _appointments.where((a) {
+      final aPId = a.patientId;
+      final aPName = a.patientName.trim().toLowerCase();
+
+      if (pId != null && pId.isNotEmpty && aPId == pId) return true;
+      if (sessionUid != null && sessionUid.isNotEmpty && aPId == sessionUid) return true;
+      if (cleanPName.isNotEmpty && aPName == cleanPName) return true;
+      if (cleanDName.isNotEmpty && aPName == cleanDName) return true;
+      if (cleanPhone.isNotEmpty && cleanPhone.length >= 6 && (aPId.contains(cleanPhone) || a.patientName.contains(cleanPhone))) return true;
+      return false;
+    }).toList();
+  }
+
+  AppointmentDto? getActiveCallForPatient(
+    PatientDto? patient, {
+    String? sessionUid,
+    String? displayName,
+  }) {
+    final list = getAppointmentsForPatient(patient, sessionUid: sessionUid, displayName: displayName);
+    try {
+      return list.firstWhere((a) => a.status == 'IN_PROGRESS' || a.status == 'CALLING');
+    } catch (_) {
+      return null;
+    }
   }
 
   List<PrescriptionDto> get prescriptions => _prescriptions;
@@ -36,10 +81,7 @@ class AppointmentRepository extends ChangeNotifier {
     if (_cache.isOffline) return;
 
     try {
-      Query query = FirebaseFirestore.instance.collection('appointments');
-      if (role == AppRole.patient && userId != null) {
-        query = query.where('patientId', isEqualTo: userId);
-      }
+      final Query query = FirebaseFirestore.instance.collection('appointments');
 
       _apptSubscription = query.snapshots().listen((snapshot) {
         if (snapshot.docs.isNotEmpty) {
@@ -116,7 +158,8 @@ class AppointmentRepository extends ChangeNotifier {
   void updateAppointmentStatus(String appointmentId, String newStatus) {
     final idx = _appointments.indexWhere((a) => a.id == appointmentId);
     if (idx != -1) {
-      _appointments[idx] = _appointments[idx].copyWith(status: newStatus);
+      final oldApt = _appointments[idx];
+      _appointments[idx] = oldApt.copyWith(status: newStatus);
       if (_cache.isOffline) {
         _cache.queueMutation('APPOINTMENT', 'UPDATE_STATUS', {'id': appointmentId, 'status': newStatus});
       } else {
@@ -129,6 +172,24 @@ class AppointmentRepository extends ChangeNotifier {
           debugPrint('Firestore appointment status notice: $e');
         }
       }
+
+      // If call is initiated/in progress, notify patient urgently
+      if (newStatus == 'IN_PROGRESS' || newStatus == 'CALLING') {
+        NotificationRepository().notifyPatientOfIncomingCall(
+          patientName: oldApt.patientName,
+          doctorName: oldApt.doctorName,
+          specialty: oldApt.specialty,
+          appointmentId: appointmentId,
+          facilityName: oldApt.facilityName,
+        );
+      } else if (newStatus == 'COMPLETED') {
+        NotificationRepository().notifyPatientOfConsultationCompleted(
+          patientName: oldApt.patientName,
+          doctorName: oldApt.doctorName,
+          appointmentId: appointmentId,
+        );
+      }
+
       notifyListeners();
     }
   }
@@ -184,7 +245,13 @@ class AppointmentRepository extends ChangeNotifier {
   }
 
   void addAppointment(AppointmentDto apt) {
-    _appointments.insert(0, apt);
+    final idx = _appointments.indexWhere((a) => a.id == apt.id);
+    if (idx != -1) {
+      _appointments[idx] = apt;
+    } else {
+      _appointments.insert(0, apt);
+    }
+
     if (_cache.isOffline) {
       _cache.queueMutation('APPOINTMENT', 'CREATE', apt.toJson());
     } else {
@@ -197,6 +264,25 @@ class AppointmentRepository extends ChangeNotifier {
         debugPrint('Firestore appointment create notice: $e');
       }
     }
+
+    // Trigger dual notifications for both Doctor and Patient
+    NotificationRepository().notifyDoctorOfAppointment(
+      doctorName: apt.doctorName,
+      patientName: apt.patientName,
+      time: apt.appointmentTime,
+      type: apt.type,
+      specialty: apt.specialty,
+      appointmentId: apt.id,
+    );
+    NotificationRepository().notifyPatientOfAppointment(
+      patientName: apt.patientName,
+      doctorName: apt.doctorName,
+      time: apt.appointmentTime,
+      type: apt.type,
+      specialty: apt.specialty,
+      appointmentId: apt.id,
+    );
+
     notifyListeners();
   }
 }

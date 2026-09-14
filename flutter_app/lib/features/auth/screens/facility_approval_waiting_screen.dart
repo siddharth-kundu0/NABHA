@@ -59,21 +59,6 @@ class _FacilityApprovalWaitingScreenState extends State<FacilityApprovalWaitingS
     }
   }
 
-  void _simulateFastTrackApproval() {
-    final facRepo = FacilityRepository();
-    if (_currentRequest.role == FacilityStaffRole.facilityAdmin) {
-      facRepo.approveFacilityAdminRequest(_currentRequest.id);
-    } else {
-      facRepo.approveStaffRequest(_currentRequest.id);
-    }
-
-    final updated = facRepo.getRequestById(_currentRequest.id);
-    if (updated != null) {
-      setState(() => _currentRequest = updated);
-      _enterWorkspace(updated);
-    }
-  }
-
   void _enterWorkspace(FacilityStaffRequestDto approvedRequest) {
     final facRepo = FacilityRepository();
     facRepo.setCurrentStaffSession(approvedRequest);
@@ -98,10 +83,16 @@ class _FacilityApprovalWaitingScreenState extends State<FacilityApprovalWaitingS
   @override
   Widget build(BuildContext context) {
     final session = SessionCoordinator();
+    final facRepo = FacilityRepository();
     final strings = FacilityStrings.of(session);
-    final isFacilityAdmin = _currentRequest.role == FacilityStaffRole.facilityAdmin;
-    final isApproved = _currentRequest.status == FacilityApprovalStatus.approved;
-    final isRejected = _currentRequest.status == FacilityApprovalStatus.rejected;
+
+    return ListenableBuilder(
+      listenable: facRepo,
+      builder: (context, _) {
+        final liveRequest = facRepo.getRequestById(_currentRequest.id) ?? _currentRequest;
+        final isFacilityAdmin = liveRequest.role == FacilityStaffRole.facilityAdmin;
+        final isApproved = liveRequest.status == FacilityApprovalStatus.approved;
+        final isRejected = liveRequest.status == FacilityApprovalStatus.rejected;
 
     return Scaffold(
       backgroundColor: RuralCareColors.canvas,
@@ -264,29 +255,14 @@ class _FacilityApprovalWaitingScreenState extends State<FacilityApprovalWaitingS
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: _simulateFastTrackApproval,
-                    icon: const Icon(Icons.flash_on_rounded, color: Color(0xFF0A6B56), size: 18),
-                    label: Text(
-                      strings.fastTrackDemo,
-                      style: const TextStyle(color: Color(0xFF0A6B56), fontWeight: FontWeight.w600, fontSize: 13),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF0A6B56), width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ),
               ],
               const SizedBox(height: 16),
             ],
           ),
         ),
       ),
+    );
+      },
     );
   }
 

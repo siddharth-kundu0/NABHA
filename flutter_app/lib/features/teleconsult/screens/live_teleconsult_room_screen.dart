@@ -52,6 +52,8 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
     final currentUserName = session.userDisplayName ??
         (session.activeRole == AppRole.doctor ? widget.doctorName : widget.patientName);
 
+    AppointmentRepository().updateAppointmentStatus(aptId, 'IN_PROGRESS');
+
     ZegoCloudService().initializeCallSession(
       appointmentId: aptId,
       userId: currentUserId,

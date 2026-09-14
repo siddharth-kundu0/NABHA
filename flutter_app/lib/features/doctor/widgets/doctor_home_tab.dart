@@ -853,6 +853,7 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
               else if (isTeleconsult)
                 ElevatedButton.icon(
                   onPressed: () {
+                    AppointmentRepository().updateAppointmentStatus(apt.id, 'IN_PROGRESS');
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (ctx) => LiveTeleconsultRoomScreen(

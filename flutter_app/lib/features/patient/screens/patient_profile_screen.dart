@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
+import 'package:ruralcare/data/repositories/notification_repository.dart';
+import 'package:ruralcare/data/repositories/appointment_repository.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'package:ruralcare/features/emergency/screens/emergency_tracking_screen.dart';
 import 'package:ruralcare/features/patient/screens/personal_details_screen.dart';
@@ -11,7 +12,7 @@ import 'package:ruralcare/features/patient/screens/privacy_security_screen.dart'
 import 'package:ruralcare/features/patient/screens/emergency_contacts_screen.dart';
 import 'package:ruralcare/features/patient/screens/account_security_screen.dart';
 import 'package:ruralcare/features/auth/screens/patient_registration_screen.dart';
-import 'package:ruralcare/data/repositories/appointment_repository.dart';
+import 'package:ruralcare/features/teleconsult/screens/live_teleconsult_room_screen.dart';
 import 'package:ruralcare/core/services/patient_history_pdf_service.dart';
 
 /// Screen 1: Profile Overview (V2 Modern)
@@ -27,11 +28,13 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final patientRepo = PatientRepository();
+    final aptRepo = AppointmentRepository();
+    final notifRepo = NotificationRepository();
     final cache = LocalCacheService();
     final session = SessionCoordinator();
 
     return ListenableBuilder(
-      listenable: Listenable.merge([patientRepo, cache, session]),
+      listenable: Listenable.merge([patientRepo, aptRepo, notifRepo, cache, session]),
       builder: (context, _) {
         final patient = patientRepo.activePatient;
         if (patient == null) {
@@ -294,6 +297,106 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 ),
 
                 const SizedBox(height: 14),
+
+                // ACTIVE TELECONSULTATION CALL ALERT (If Doctor is calling)
+                Builder(
+                  builder: (context) {
+                    final activeCall = aptRepo.getActiveCallForPatient(
+                      patient,
+                      sessionUid: session.currentUserId,
+                      displayName: session.userDisplayName,
+                    );
+                    if (activeCall == null) return const SizedBox.shrink();
+
+                    return Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x1015803D), blurRadius: 8, offset: Offset(0, 2)),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 34,
+                                height: 34,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF16A34A),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.videocam_rounded, color: Colors.white, size: 18),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      session.isHindi
+                                          ? 'लाइव परामर्श कॉल सक्रिय है!'
+                                          : (session.isMarathi ? 'थेट सल्लामसलत कॉल सुरू आहे!' : 'Live Video Call Active!'),
+                                      style: const TextStyle(
+                                        fontFamily: 'Noto Sans',
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                        color: Color(0xFF14532D),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${activeCall.doctorName} • ${activeCall.specialty}',
+                                      style: const TextStyle(fontSize: 11, color: Color(0xFF166534)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (ctx) => LiveTeleconsultRoomScreen(
+                                      patientName: patient.fullName,
+                                      doctorName: activeCall.doctorName,
+                                      specialty: activeCall.specialty,
+                                      appointmentId: activeCall.id,
+                                      facilityName: activeCall.facilityName,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.videocam_rounded, size: 18),
+                              label: Text(
+                                session.isHindi
+                                    ? 'वीडियो कॉल में अभी जुड़ें'
+                                    : (session.isMarathi ? 'व्हिडिओ कॉलमध्ये आत्ताच सामील व्हा' : 'Join Video Call Now'),
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF16A34A),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
 
                 // PATIENT HERO CARD
                 Container(
@@ -846,21 +949,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                         ),
                       ],
                     ),
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Role Switcher for Testing Demo
-                Center(
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                    label: Text(
-                      'Testing Mode: Switch Role (${session.activeRole.name})',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-                    ),
-                    onPressed: () => DemoRoleSwitcher.show(context),
                   ),
                 ),
 

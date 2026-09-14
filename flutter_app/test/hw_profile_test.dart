@@ -70,13 +70,13 @@ void main() {
     await tester.tap(find.byIcon(Icons.close));
     await tester.pumpAndSettle();
 
-    // 8. Tap Sign Out / Switch Role
-    final signOutBtn = find.text('Sign Out / Switch Role');
+    // 8. Tap Sign Out
+    final signOutBtn = find.text('Sign Out');
     expect(signOutBtn, findsOneWidget);
     await tester.tap(signOutBtn);
     await tester.pumpAndSettle();
-    expect(find.text('Switch Role & Environment'), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.close));
+    expect(find.text('Sign Out?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
 
     // 9. Test Language Switches
@@ -115,10 +115,14 @@ void main() {
     expect(find.text('PP'), findsOneWidget); // Squircle avatar initials updated!
 
     // 12. Test Emergency Actions
-    await tester.tap(find.text('Call 108 Ambulance Dispatcher'));
+    final emergBtn = find.text('Call 108 Ambulance Dispatcher');
+    await tester.ensureVisible(emergBtn);
     await tester.pumpAndSettle();
-    expect(find.text('Call PHC MO (Dr. Anita Roy)'), findsOneWidget);
-    await tester.tap(find.text('Call PHC MO (Dr. Anita Roy)'));
+    await tester.tap(emergBtn);
+    await tester.pumpAndSettle();
+    final callMoBtn = find.textContaining('Call PHC MO');
+    expect(callMoBtn, findsOneWidget);
+    await tester.tap(callMoBtn);
     await tester.pumpAndSettle();
   });
 }

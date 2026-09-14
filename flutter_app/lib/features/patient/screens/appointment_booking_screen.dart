@@ -122,19 +122,18 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       builder: (context, _) {
         final strings = PatientStrings.of(session);
         final patient = patientRepo.activePatient;
-        final patientId = patient?.id ?? '';
+        final patientAppts = aptRepo.getAppointmentsForPatient(
+          patient,
+          sessionUid: session.currentUserId,
+          displayName: session.userDisplayName,
+        );
 
-        final upcomingList = aptRepo.appointments
-            .where((a) =>
-                a.patientId == patientId &&
-                a.status != 'COMPLETED' &&
-                a.status != 'CANCELLED')
+        final upcomingList = patientAppts
+            .where((a) => a.status != 'COMPLETED' && a.status != 'CANCELLED')
             .toList();
 
-        final pastList = aptRepo.appointments
-            .where((a) =>
-                a.patientId == patientId &&
-                (a.status == 'COMPLETED' || a.status == 'CANCELLED'))
+        final pastList = patientAppts
+            .where((a) => a.status == 'COMPLETED' || a.status == 'CANCELLED')
             .toList();
 
         final appointments = _selectedView == 0 ? upcomingList : pastList;
@@ -326,28 +325,37 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                 Expanded(
                   child: SizedBox(
                     height: 44,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (ctx) => LiveTeleconsultRoomScreen(
-                              patientName: patient?.fullName ?? 'Beneficiary',
-                              doctorName: apt.doctorName,
-                              specialty: apt.specialty,
-                              appointmentId: apt.id,
-                              facilityName: apt.facilityName,
-                            ),
+                    child: Builder(
+                      builder: (ctx) {
+                        final isCallActive = apt.status == 'IN_PROGRESS' || apt.status == 'CALLING';
+                        return ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (ctx) => LiveTeleconsultRoomScreen(
+                                  patientName: patient?.fullName ?? 'Beneficiary',
+                                  doctorName: apt.doctorName,
+                                  specialty: apt.specialty,
+                                  appointmentId: apt.id,
+                                  facilityName: apt.facilityName,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: Icon(isCallActive ? Icons.videocam_rounded : Icons.video_call_outlined, size: 18),
+                          label: Text(
+                            isCallActive
+                                ? (strings.isHi ? 'कॉल से अभी जुड़ें (सक्रिय)' : (strings.isMr ? 'कॉलमध्ये सामील व्हा (सुरू)' : 'Join Call (Active)'))
+                                : strings.joinTeleconsult,
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isCallActive ? const Color(0xFF16A34A) : RuralCareColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         );
                       },
-                      icon: const Icon(Icons.video_call_outlined, size: 18),
-                      label: Text(strings.joinTeleconsult),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: RuralCareColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
                     ),
                   ),
                 )

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:ruralcare/data/models/facility_dto.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +8,65 @@ class FacilityRepository extends ChangeNotifier {
   factory FacilityRepository() => _instance;
   FacilityRepository._internal() {
     _loadInitialFacilities();
+    bindFirestoreStream();
+  }
+
+  StreamSubscription<QuerySnapshot>? _adminReqSub;
+  StreamSubscription<QuerySnapshot>? _staffReqSub;
+
+  void bindFirestoreStream() {
+    _adminReqSub?.cancel();
+    _staffReqSub?.cancel();
+
+    try {
+      _adminReqSub = FirebaseFirestore.instance
+          .collection('facility_admin_requests')
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.docs.isNotEmpty) {
+          for (final doc in snapshot.docs) {
+            try {
+              final data = doc.data();
+              final req = FacilityStaffRequestDto.fromJson(data);
+              final idx = _adminRequests.indexWhere((r) => r.id == req.id);
+              if (idx != -1) {
+                _adminRequests[idx] = req;
+              } else {
+                _adminRequests.add(req);
+              }
+            } catch (e) {
+              debugPrint('Notice parsing facility admin request: $e');
+            }
+          }
+          notifyListeners();
+        }
+      }, onError: (e) => debugPrint('Error streaming admin requests: $e'));
+
+      _staffReqSub = FirebaseFirestore.instance
+          .collection('facility_staff_requests')
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.docs.isNotEmpty) {
+          for (final doc in snapshot.docs) {
+            try {
+              final data = doc.data();
+              final req = FacilityStaffRequestDto.fromJson(data);
+              final idx = _staffRequests.indexWhere((r) => r.id == req.id);
+              if (idx != -1) {
+                _staffRequests[idx] = req;
+              } else {
+                _staffRequests.add(req);
+              }
+            } catch (e) {
+              debugPrint('Notice parsing staff request: $e');
+            }
+          }
+          notifyListeners();
+        }
+      }, onError: (e) => debugPrint('Error streaming staff requests: $e'));
+    } catch (e) {
+      debugPrint('Notice binding facility stream: $e');
+    }
   }
 
   late List<FacilityDto> _facilities;
@@ -86,13 +146,19 @@ class FacilityRepository extends ChangeNotifier {
   List<DiagnosticOrderDto> get diagnosticOrders => List.unmodifiable(_diagnosticOrders);
 
   List<FacilityStaffRequestDto> getPendingStaffRequestsForFacility(String facilityId) {
+    final facName = getFacilityById(facilityId)?.name.toLowerCase() ?? '';
     return _staffRequests
-        .where((r) => r.facilityId == facilityId && r.status == FacilityApprovalStatus.pendingFacilityAdmin)
+        .where((r) =>
+            (r.facilityId == facilityId || (facName.isNotEmpty && r.facilityName.toLowerCase() == facName)) &&
+            r.status == FacilityApprovalStatus.pendingFacilityAdmin)
         .toList();
   }
 
   List<FacilityStaffRequestDto> getAllStaffRequestsForFacility(String facilityId) {
-    return _staffRequests.where((r) => r.facilityId == facilityId).toList();
+    final facName = getFacilityById(facilityId)?.name.toLowerCase() ?? '';
+    return _staffRequests
+        .where((r) => r.facilityId == facilityId || (facName.isNotEmpty && r.facilityName.toLowerCase() == facName))
+        .toList();
   }
 
   List<FacilityStaffRequestDto> getPendingFacilityAdminRequests() {
@@ -169,6 +235,14 @@ class FacilityRepository extends ChangeNotifier {
   void submitStaffRequest(FacilityStaffRequestDto req) {
     _staffRequests.removeWhere((r) => r.id == req.id);
     _staffRequests.add(req);
+    try {
+      FirebaseFirestore.instance
+          .collection('facility_staff_requests')
+          .doc(req.id)
+          .set(req.toJson(), SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Firestore submitStaffRequest notice: $e');
+    }
     notifyListeners();
   }
 
@@ -193,6 +267,19 @@ class FacilityRepository extends ChangeNotifier {
           onDutyStatus: 'On Duty',
         ),
       );
+
+      try {
+        FirebaseFirestore.instance
+            .collection('facility_staff_requests')
+            .doc(requestId)
+            .set({
+          'status': FacilityApprovalStatus.approved.name,
+          'assignedRoom': assignedRoom ?? updated.department,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Firestore approveStaffRequest notice: $e');
+      }
+
       notifyListeners();
     }
   }
@@ -204,6 +291,17 @@ class FacilityRepository extends ChangeNotifier {
         status: FacilityApprovalStatus.rejected,
         rejectionReason: reason,
       );
+      try {
+        FirebaseFirestore.instance
+            .collection('facility_staff_requests')
+            .doc(requestId)
+            .set({
+          'status': FacilityApprovalStatus.rejected.name,
+          'rejectionReason': reason,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Firestore rejectStaffRequest notice: $e');
+      }
       notifyListeners();
     }
   }
@@ -211,6 +309,14 @@ class FacilityRepository extends ChangeNotifier {
   void submitFacilityAdminRequest(FacilityStaffRequestDto req) {
     _adminRequests.removeWhere((r) => r.id == req.id);
     _adminRequests.add(req);
+    try {
+      FirebaseFirestore.instance
+          .collection('facility_admin_requests')
+          .doc(req.id)
+          .set(req.toJson(), SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Firestore submitFacilityAdminRequest notice: $e');
+    }
     notifyListeners();
   }
 
@@ -221,6 +327,16 @@ class FacilityRepository extends ChangeNotifier {
       _adminRequests[idx] = old.copyWith(
         status: FacilityApprovalStatus.approved,
       );
+      try {
+        FirebaseFirestore.instance
+            .collection('facility_admin_requests')
+            .doc(requestId)
+            .set({
+          'status': FacilityApprovalStatus.approved.name,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Firestore approveFacilityAdminRequest notice: $e');
+      }
       notifyListeners();
     }
   }
@@ -232,6 +348,17 @@ class FacilityRepository extends ChangeNotifier {
         status: FacilityApprovalStatus.rejected,
         rejectionReason: reason,
       );
+      try {
+        FirebaseFirestore.instance
+            .collection('facility_admin_requests')
+            .doc(requestId)
+            .set({
+          'status': FacilityApprovalStatus.rejected.name,
+          'rejectionReason': reason,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Firestore rejectFacilityAdminRequest notice: $e');
+      }
       notifyListeners();
     }
   }

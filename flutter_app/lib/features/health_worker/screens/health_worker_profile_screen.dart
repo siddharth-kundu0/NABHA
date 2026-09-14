@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/core/database/local_cache.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
@@ -568,21 +567,46 @@ class _HealthWorkerProfileScreenState extends State<HealthWorkerProfileScreen> {
 
               const SizedBox(height: 20),
 
-              // 6. Sign Out / Switch Role Button matching Stitch Profile
+              // Genuine Sign Out Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
-                child: OutlinedButton.icon(
-                  onPressed: () => DemoRoleSwitcher.show(context),
-                  icon: const Icon(Icons.swap_horiz_rounded, color: Color(0xFFDC2626), size: 20),
-                  label: const Text(
-                    'Sign Out / Switch Role',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(session.isHindi ? 'साइन आउट करें?' : (session.isMarathi ? 'साइन आउट करायचे?' : 'Sign Out?')),
+                        content: Text(session.isHindi
+                            ? 'क्या आप सुरक्षित रूप से सत्र समाप्त करना चाहते हैं?'
+                            : (session.isMarathi ? 'आपण सुरक्षितपणे सत्र समाप्त करू इच्छिता?' : 'Are you sure you want to end this clinical session?')),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: Text(session.isHindi ? 'रद्द करें' : (session.isMarathi ? 'रद्द करा' : 'Cancel')),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+                            onPressed: () {
+                              Navigator.of(ctx).pop();
+                              session.clearAuthenticatedUser();
+                              Navigator.of(context).popUntil((route) => route.isFirst);
+                            },
+                            child: Text(session.isHindi ? 'साइन आउट' : (session.isMarathi ? 'साइन आउट' : 'Sign Out'),
+                                style: const TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+                  label: Text(
+                    session.isHindi ? 'खाते से साइन आउट करें' : (session.isMarathi ? 'साइन आउट करा' : 'Sign Out'),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),

@@ -298,7 +298,7 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
     await PatientHistoryPdfService().exportOrPrintPatientHistory(context, patient);
   }
 
-  void _simulateUploadDocument() {
+  void _attachClinicalDocument() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1767,7 +1767,7 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    onPressed: _simulateUploadDocument,
+                    onPressed: _attachClinicalDocument,
                     icon: const Icon(Icons.upload_file_rounded, size: 14),
                     label: const Text('Attach Doc', style: TextStyle(fontSize: 11)),
                   ),

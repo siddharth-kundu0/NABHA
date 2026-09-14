@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/data/repositories/facility_repository.dart';
 import 'package:ruralcare/features/facility/utils/facility_strings.dart';
 import 'package:ruralcare/app/routes.dart';
@@ -544,25 +543,57 @@ class _FacilityProfileTabState extends State<FacilityProfileTab> {
           ),
           const Divider(height: 24),
           InkWell(
-            onTap: () => DemoRoleSwitcher.show(context),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text(session.isHi ? 'साइन आउट करें?' : (session.isMr ? 'साइन आउट करायचे?' : 'Sign Out?')),
+                  content: Text(session.isHi
+                      ? 'क्या आप सुरक्षित रूप से सुविधा सत्र समाप्त करना चाहते हैं?'
+                      : (session.isMr ? 'आपण सुरक्षितपणे सुविधा सत्र समाप्त करू इच्छिता?' : 'Are you sure you want to end this facility workstation session?')),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: Text(session.isHi ? 'रद्द करें' : (session.isMr ? 'रद्द करा' : 'Cancel')),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        session.clearAuthenticatedUser();
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      },
+                      child: Text(session.isHi ? 'साइन आउट' : (session.isMr ? 'साइन आउट' : 'Sign Out'),
+                          style: const TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
+            },
             borderRadius: BorderRadius.circular(8),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  Icon(Icons.swap_horiz_rounded, color: RuralCareColors.teal),
-                  SizedBox(width: 12),
+                  const Icon(Icons.logout_rounded, color: Color(0xFFDC2626)),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Switch Role (Demo Switcher)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                        SizedBox(height: 2),
-                        Text('Switch to Doctor, Health Worker, Patient or District Admin', style: AppTypography.supporting),
+                        Text(
+                          session.isHi ? 'सुविधा से साइन आउट करें' : (session.isMr ? 'सुविधेतून साइन आउट करा' : 'Sign Out from Facility'),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFDC2626)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          session.isHi ? 'प्रशासनिक और स्टाफ सत्र समाप्त करें' : (session.isMr ? 'प्रशासकीय आणि कर्मचारी सत्र समाप्त करा' : 'End facility administration & staff session'),
+                          style: AppTypography.supporting,
+                        ),
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_right, color: RuralCareColors.textSecondary),
+                  const Icon(Icons.chevron_right, color: RuralCareColors.textSecondary),
                 ],
               ),
             ),

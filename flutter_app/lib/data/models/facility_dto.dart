@@ -217,6 +217,71 @@ class FacilityStaffRequestDto {
       rejectionReason: rejectionReason ?? this.rejectionReason,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'facilityId': facilityId,
+      'facilityName': facilityName,
+      'staffName': staffName,
+      'mobile': mobile,
+      'role': role.name,
+      'licenseOrEmployeeId': licenseOrEmployeeId,
+      'department': department,
+      'status': status.name,
+      'submittedAt': submittedAt.toIso8601String(),
+      'assignedRoom': assignedRoom,
+      'rejectionReason': rejectionReason,
+    };
+  }
+
+  factory FacilityStaffRequestDto.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic val) {
+      if (val == null) return DateTime.now();
+      if (val is DateTime) return val;
+      if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+      if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+      // Handle Firestore Timestamp dynamically
+      try {
+        return (val as dynamic).toDate() as DateTime;
+      } catch (_) {
+        return DateTime.now();
+      }
+    }
+
+    FacilityStaffRole parseRole(dynamic val) {
+      if (val is String) {
+        for (final r in FacilityStaffRole.values) {
+          if (r.name == val) return r;
+        }
+      }
+      return FacilityStaffRole.pharmacist;
+    }
+
+    FacilityApprovalStatus parseStatus(dynamic val) {
+      if (val is String) {
+        for (final s in FacilityApprovalStatus.values) {
+          if (s.name == val) return s;
+        }
+      }
+      return FacilityApprovalStatus.pendingFacilityAdmin;
+    }
+
+    return FacilityStaffRequestDto(
+      id: json['id'] as String? ?? '',
+      facilityId: json['facilityId'] as String? ?? '',
+      facilityName: json['facilityName'] as String? ?? '',
+      staffName: json['staffName'] as String? ?? '',
+      mobile: json['mobile'] as String? ?? '',
+      role: parseRole(json['role']),
+      licenseOrEmployeeId: json['licenseOrEmployeeId'] as String? ?? '',
+      department: json['department'] as String? ?? '',
+      status: parseStatus(json['status']),
+      submittedAt: parseDate(json['submittedAt']),
+      assignedRoom: json['assignedRoom'] as String?,
+      rejectionReason: json['rejectionReason'] as String?,
+    );
+  }
 }
 
 class PrescriptionOrderDto {

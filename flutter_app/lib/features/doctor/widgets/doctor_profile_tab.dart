@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ruralcare/core/theme/app_theme.dart';
-import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'package:ruralcare/data/repositories/doctor_repository.dart';
 import 'package:ruralcare/features/doctor/utils/doctor_strings.dart';
@@ -234,24 +233,7 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
               ),
               const SizedBox(height: 16),
 
-              // 4. Role Switcher Button
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton.icon(
-                  onPressed: () => DemoRoleSwitcher.show(context),
-                  icon: const Icon(Icons.swap_horiz_rounded, size: 20),
-                  label: Text(strings.switchDemoProfile, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: RuralCareColors.teal,
-                    side: const BorderSide(color: RuralCareColors.teal),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              // 5. Sign Out Button
+              // Sign Out Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
