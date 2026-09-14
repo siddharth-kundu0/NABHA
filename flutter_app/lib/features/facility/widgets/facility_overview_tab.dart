@@ -35,10 +35,7 @@ class FacilityOverviewTab extends StatelessWidget {
       builder: (context, _) {
         final strings = FacilityStrings.of(session);
         final facilities = facRepo.facilities;
-        final facility = facilities.firstWhere(
-          (f) => f.id == 'FAC-SDH-301',
-          orElse: () => facilities.first,
-        );
+        final facility = facRepo.currentFacility;
         final activeReferrals = refRepo.referrals;
 
         return SingleChildScrollView(
@@ -86,7 +83,7 @@ class FacilityOverviewTab extends StatelessWidget {
               ListenableBuilder(
                 listenable: DoctorRepository(),
                 builder: (context, _) {
-                  final pending = DoctorRepository().getPendingRequestsForFacility('FAC-SC-102');
+                  final pending = DoctorRepository().getPendingRequestsForFacility(facRepo.currentFacility.id);
                   return Container(
                     decoration: BoxDecoration(
                       color: pending.isNotEmpty ? const Color(0xFFFEF3C7) : const Color(0xFFE8F5F2),

@@ -71,7 +71,14 @@ class FacilityRepository extends ChangeNotifier {
 
   late List<FacilityDto> _facilities;
   List<FacilityDto> get facilities => _facilities;
-  FacilityDto get currentFacility => _facilities.firstWhere((f) => f.id == 'FAC-SDH-301');
+  FacilityDto get currentFacility {
+    if (_currentStaffSession != null) {
+      try {
+        return _facilities.firstWhere((f) => f.id == _currentStaffSession!.facilityId);
+      } catch (_) {}
+    }
+    return _facilities.firstWhere((f) => f.id == 'FAC-SDH-301', orElse: () => _facilities.first);
+  }
   FacilityDto? getFacilityById(String id) {
     try {
       return _facilities.firstWhere((f) => f.id == id);

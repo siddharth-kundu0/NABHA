@@ -37,7 +37,7 @@ class PatientRepository extends ChangeNotifier {
     return _patients;
   }
 
-  PatientDto getOrCreatePatientForIdentifier(String identifier, {String? subCentre, String? district}) {
+  PatientDto? getOrCreatePatientForIdentifier(String identifier, {String? subCentre, String? district}) {
     final cleanId = identifier.replaceAll(RegExp(r'[^0-9]'), '');
     final cleanName = identifier.trim().toLowerCase();
     final matches = _patients.where((p) {
@@ -58,31 +58,7 @@ class PatientRepository extends ChangeNotifier {
       return _activePatient!;
     }
 
-    final isNumeric = cleanId.length >= 6;
-    final displayName = isNumeric ? 'Citizen ($identifier)' : (identifier.isNotEmpty ? identifier : 'Registered Beneficiary');
-    final genSuffix = DateTime.now().millisecondsSinceEpoch % 900 + 100;
-
-    final newPatient = PatientDto(
-      id: 'pat-${identifier.hashCode.abs().toString().padLeft(6, '0').substring(0, 6)}',
-      ruralCareId: 'RC-MH-$genSuffix',
-      abhaId: '91-${identifier.length >= 8 ? "${identifier.substring(0, 4)}-${identifier.substring(4, 8)}" : "8492-1029"}-8472',
-      fullName: displayName,
-      age: 30,
-      gender: 'OTHER',
-      phoneNumber: isNumeric ? (identifier.startsWith('+') ? identifier : '+91$identifier') : '+91 9800000000',
-      village: 'Kashti',
-      subCentre: subCentre ?? 'Kashti Sub-Centre',
-      district: district ?? 'Pune Rural',
-      assignedAsha: 'Sunita Tai Gaikwad (ASHA-MH-401)',
-      emergencyContact: const EmergencyContactDto(
-        name: 'Family Member',
-        relationship: 'Guardian',
-        phoneNumber: '+91 9800000001',
-      ),
-    );
-    addPatient(newPatient);
-    _activePatient = newPatient;
-    return newPatient;
+    return null;
   }
 
   PatientDto? get defaultPatient => _patients.isNotEmpty ? _patients.first : null;

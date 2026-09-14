@@ -93,11 +93,18 @@ class _DirectLoginScreenState extends State<DirectLoginScreen> {
 
     if (_selectedRole == AppRole.patient) {
       final patient = PatientRepository().getOrCreatePatientForIdentifier(identifier);
+      if (patient == null && !authResult.isSuccess) {
+         setState(() {
+           _isLoading = false;
+           _errorMessage = 'Patient not found. Please register first.';
+         });
+         return;
+      }
       session.setAuthenticatedUser(
-        uid: authResult.user?.uid ?? patient.id,
+        uid: authResult.user?.uid ?? patient?.id ?? identifier,
         email: authResult.user?.email ?? '$identifier@ruralcare.nabha.gov.in',
         role: AppRole.patient,
-        displayName: patient.fullName,
+        displayName: patient?.fullName ?? authResult.user?.displayName ?? 'Registered Beneficiary',
       );
     } else if (_selectedRole == AppRole.doctor) {
       final docRepo = DoctorRepository();

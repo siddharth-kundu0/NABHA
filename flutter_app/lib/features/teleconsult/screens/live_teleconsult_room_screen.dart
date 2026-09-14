@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'package:ruralcare/data/repositories/patient_repository.dart';
 import 'package:ruralcare/data/repositories/appointment_repository.dart';
+import 'package:ruralcare/data/models/patient_dto.dart';
 import 'package:ruralcare/features/doctor/screens/doctor_care_plan_screen.dart';
 import 'package:ruralcare/core/services/zegocloud_service.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
@@ -49,22 +50,29 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
 
     if (session.activeRole == AppRole.doctor) {
       final patientRepo = PatientRepository();
-      final patient = patientRepo.patients.isNotEmpty
-          ? patientRepo.patients.firstWhere(
-              (p) => p.fullName == widget.patientName || p.id == widget.patientName,
-              orElse: () => patientRepo.activePatient ?? patientRepo.getOrCreatePatientForIdentifier(widget.patientName),
-            )
-          : patientRepo.getOrCreatePatientForIdentifier(widget.patientName);
+      
+      PatientDto? patient;
+      try {
+        patient = patientRepo.patients.firstWhere(
+          (p) => p.fullName == widget.patientName || p.id == widget.patientName,
+        );
+      } catch (_) {
+        patient = patientRepo.activePatient ?? patientRepo.getOrCreatePatientForIdentifier(widget.patientName);
+      }
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (c) => DoctorCarePlanScreen(
-            patient: patient,
-            appointmentId: aptId,
-            isPatientView: false,
+      if (patient != null) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (ctx) => DoctorCarePlanScreen(
+              patient: patient!,
+              appointmentId: aptId,
+              isPatientView: false,
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        Navigator.of(context).pop(); // fallback if patient not found
+      }
     } else {
       Navigator.of(context).pop();
     }

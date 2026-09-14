@@ -161,15 +161,9 @@ void main() {
 
     expect(patientRepo.patients.isEmpty, true);
 
-    // Dynamic resolution creates dynamic patient with zero hardcoded mock persona
+    // Auto-provisioning mock patients is disabled
     final dynamicPatient = patientRepo.getOrCreatePatientForIdentifier('Sunita Sharma', subCentre: 'Kashti Sub-Centre');
-    expect(dynamicPatient.fullName, 'Sunita Sharma');
-    expect(dynamicPatient.subCentre, 'Kashti Sub-Centre');
-    expect(patientRepo.patients.length, 1);
-
-    // Resolving again returns the existing patient
-    final existing = patientRepo.getOrCreatePatientForIdentifier('Sunita Sharma');
-    expect(existing.id, dynamicPatient.id);
+    expect(dynamicPatient, isNull);
   });
 
   testWidgets('LiveTeleconsultRoomScreen displays remote participant based on user role', (tester) async {

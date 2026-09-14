@@ -53,11 +53,12 @@ class FirebaseAuthService {
     required AppRole expectedRole,
   }) async {
     final email = canonicalEmailForIdentifier(identifier);
+    final effectivePassword = password.length >= 6 ? password : 'RC-$password';
 
     try {
       final credential = await _auth.signInWithEmailAndPassword(
         email: email,
-        password: password,
+        password: effectivePassword,
       );
 
       final user = credential.user;

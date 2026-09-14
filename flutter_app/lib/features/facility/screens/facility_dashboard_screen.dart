@@ -248,7 +248,7 @@ class _FacilityDashboardScreenState extends State<FacilityDashboardScreen> {
                 ListenableBuilder(
                   listenable: DoctorRepository(),
                   builder: (context, _) {
-                    final pending = DoctorRepository().getPendingRequestsForFacility('FAC-SC-102').length;
+                    final pending = DoctorRepository().getPendingRequestsForFacility(facRepo.currentFacility.id).length;
                     return Stack(
                       clipBehavior: Clip.none,
                       children: [

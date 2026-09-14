@@ -1463,6 +1463,14 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
                     final patient = patientRepo.activePatient ??
                         patientRepo.defaultPatient ??
                         patientRepo.getOrCreatePatientForIdentifier(session.currentUserId ?? 'citizen');
+                        
+                    if (patient == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please register a patient profile first.')),
+                      );
+                      return;
+                    }
+                    
                     final doctor = _selectedDoctor!;
 
                     final aptRepo = AppointmentRepository();

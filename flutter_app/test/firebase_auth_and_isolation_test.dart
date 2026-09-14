@@ -209,23 +209,9 @@ void main() {
       expect(patient.latestVitals!.recordedByRole, 'HARDWARE_BLE');
     });
 
-    test('getOrCreatePatientForIdentifier auto-provisions patient on direct mobile sign in', () {
-      final session = SessionCoordinator();
+    test('getOrCreatePatientForIdentifier no longer auto-provisions patient on direct mobile sign in', () {
       final patient = patientRepo.getOrCreatePatientForIdentifier('8307165924');
-      expect(patient, isNotNull);
-      expect(patient.phoneNumber, contains('8307165924'));
-      expect(patientRepo.activePatient?.id, patient.id);
-
-      session.setAuthenticatedUser(
-        uid: patient.id,
-        email: '8307165924@ruralcare.nabha.gov.in',
-        role: AppRole.patient,
-        displayName: patient.fullName,
-      );
-
-      final scoped = patientRepo.patients;
-      expect(scoped.length, 1);
-      expect(scoped.first.phoneNumber, contains('8307165924'));
+      expect(patient, isNull);
     });
   });
 }
