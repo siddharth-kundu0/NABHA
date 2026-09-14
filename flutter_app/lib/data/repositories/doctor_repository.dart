@@ -102,67 +102,64 @@ class DoctorRepository extends ChangeNotifier {
     }
   }
 
-  RegisteredDoctorAccount autoSelectDoctor({String? specialty, String? facilityId}) {
-    if (_registeredDoctors.isNotEmpty) {
-      if (specialty != null && specialty.isNotEmpty) {
-        final matches = _registeredDoctors.where((d) =>
-            d.specialty.toLowerCase().contains(specialty.toLowerCase()) ||
-            specialty.toLowerCase().contains(d.specialty.toLowerCase()));
-        if (matches.isNotEmpty) return matches.first;
+  RegisteredDoctorAccount? autoSelectDoctor({String? specialty, String? facilityId, String? subCentre}) {
+    if (_registeredDoctors.isEmpty) return null;
+
+    var pool = _registeredDoctors;
+    if (subCentre != null && subCentre.isNotEmpty) {
+      final subClean = subCentre.toLowerCase().replaceAll('sub-centre', '').replaceAll('उप-केंद्र', '').replaceAll('(शिरूर)', '').replaceAll('(हवेली)', '').replaceAll('(दौंड)', '').trim();
+      final subMatches = pool.where((d) =>
+          d.facilityName.toLowerCase().contains(subClean) ||
+          d.facilityId.toLowerCase().contains(subClean));
+      if (subMatches.isNotEmpty) {
+        pool = subMatches.toList();
       }
-      return _registeredDoctors.first;
+    } else if (facilityId != null && facilityId.isNotEmpty) {
+      final facMatches = pool.where((d) => d.facilityId == facilityId);
+      if (facMatches.isNotEmpty) {
+        pool = facMatches.toList();
+      }
     }
 
-    // Default verified on-duty teleconsultation Medical Officer
-    return RegisteredDoctorAccount(
-      doctorId: 'DOC-MH-108',
-      name: 'Dr. Anjali Patil',
-      mobile: '+919823411200',
-      password: '',
-      qualification: 'MBBS, MS (OB/GYN & Tele-OPD)',
-      specialty: specialty != null && specialty.isNotEmpty ? specialty : 'General Medicine & Emergency',
-      registrationNumber: 'MMC-2018-8421',
-      facilityId: facilityId ?? 'FAC-SDH-301',
-      facilityName: 'Baramati Sub-District Hospital',
-    );
+    if (specialty != null && specialty.isNotEmpty && specialty != 'General Medicine') {
+      final matches = pool.where((d) =>
+          d.specialty.toLowerCase().contains(specialty.toLowerCase()) ||
+          specialty.toLowerCase().contains(d.specialty.toLowerCase()));
+      if (matches.isNotEmpty) return matches.first;
+    }
+
+    return pool.isNotEmpty ? pool.first : null;
+  }
+
+  /// Returns real registered doctors matching a patient's Sub-Centre / catchment
+  List<RegisteredDoctorAccount> getDoctorsForSubCentre({
+    required String subCentre,
+    String? specialty,
+  }) {
+    if (_registeredDoctors.isEmpty) return [];
+    final clean = subCentre.toLowerCase().replaceAll('sub-centre', '').replaceAll('उप-केंद्र', '').replaceAll('(शिरूर)', '').replaceAll('(हवेली)', '').replaceAll('(दौंड)', '').trim();
+    
+    return _registeredDoctors.where((d) {
+      final matchSub = clean.isEmpty ||
+          d.facilityName.toLowerCase().contains(clean) ||
+          d.facilityId.toLowerCase().contains(clean);
+      if (!matchSub) return false;
+
+      if (specialty != null && specialty.isNotEmpty && specialty != 'General Medicine') {
+        return d.specialty.toLowerCase().contains(specialty.toLowerCase()) ||
+            specialty.toLowerCase().contains(d.specialty.toLowerCase());
+      }
+      return true;
+    }).toList();
+  }
+
+  void clearActiveDoctor() {
+    _activeDoctor = null;
+    notifyListeners();
   }
 
   void _initRegisteredDoctors() {
-    _registeredDoctors.addAll([
-      const RegisteredDoctorAccount(
-        doctorId: 'DOC-MH-8421-101',
-        name: 'Dr. Ramesh Sharma',
-        mobile: '9822014490',
-        password: 'password123',
-        qualification: 'MBBS, MD (Medicine)',
-        specialty: 'General Medicine',
-        registrationNumber: 'MMC-2015-8421',
-        facilityId: 'FAC-SDH-301',
-        facilityName: 'Baramati Sub-District Hospital',
-      ),
-      const RegisteredDoctorAccount(
-        doctorId: 'DOC-MH-108',
-        name: 'Dr. Anjali Patil',
-        mobile: '9823411200',
-        password: 'password123',
-        qualification: 'MBBS, MS (OB/GYN & Tele-OPD)',
-        specialty: 'General Medicine & Emergency',
-        registrationNumber: 'MMC-2018-8421',
-        facilityId: 'FAC-SDH-301',
-        facilityName: 'Baramati Sub-District Hospital',
-      ),
-      const RegisteredDoctorAccount(
-        doctorId: 'DOC-PHC-201',
-        name: 'Dr. Suresh Kulkarni',
-        mobile: '9822099881',
-        password: 'password123',
-        qualification: 'MBBS',
-        specialty: 'Family Medicine',
-        registrationNumber: 'MMC-2012-3321',
-        facilityId: 'FAC-PHC-201',
-        facilityName: 'Kashti Primary Health Centre',
-      ),
-    ]);
+    // Zero mock doctors - populated strictly dynamically via registration / Firestore
     bindFirestoreStream();
   }
 
@@ -454,14 +451,14 @@ class DoctorRepository extends ChangeNotifier {
           (d) => d.name == session.userDisplayName,
           orElse: () => RegisteredDoctorAccount(
             doctorId: session.currentUserId!,
-            name: session.userDisplayName?.isNotEmpty == true ? session.userDisplayName! : 'Dr. Attending Physician',
-            mobile: session.currentUserEmail ?? 'doctor@ruralcare.nabha.gov.in',
+            name: session.userDisplayName?.isNotEmpty == true ? session.userDisplayName! : 'Dr. Medical Officer',
+            mobile: session.currentUserEmail ?? '',
             password: '',
-            qualification: 'MBBS, MD',
+            qualification: 'MBBS',
             specialty: 'General Medicine',
-            registrationNumber: 'MCI-${(session.currentUserId.hashCode.abs() % 90000) + 10000}',
-            facilityId: session.assignedFacilityId ?? 'FAC-SDH-301',
-            facilityName: session.assignedCatchment ?? 'Baramati Sub-District Hospital',
+            registrationNumber: 'REG-${(session.currentUserId.hashCode.abs() % 90000) + 10000}',
+            facilityId: session.assignedFacilityId ?? 'FAC-SC-102',
+            facilityName: session.assignedCatchment ?? 'Kashti Sub-Centre',
           ),
         ),
       );
@@ -473,16 +470,16 @@ class DoctorRepository extends ChangeNotifier {
       return _registeredDoctors.first;
     }
 
-    return RegisteredDoctorAccount(
-      doctorId: 'DOC-MH-LIVE',
-      name: session.userDisplayName?.isNotEmpty == true ? session.userDisplayName! : 'Dr. Attending Physician',
-      mobile: 'doctor@ruralcare.nabha.gov.in',
+    return const RegisteredDoctorAccount(
+      doctorId: 'DOC-UNREGISTERED',
+      name: 'Doctor (Not Registered)',
+      mobile: '',
       password: '',
-      qualification: 'MBBS, MD',
+      qualification: 'MBBS',
       specialty: 'General Medicine',
-      registrationNumber: 'MCI-2026-LIVE',
-      facilityId: 'FAC-SDH-301',
-      facilityName: 'Baramati Sub-District Hospital',
+      registrationNumber: 'PENDING',
+      facilityId: 'FAC-SC-102',
+      facilityName: 'Kashti Sub-Centre',
     );
   }
 }

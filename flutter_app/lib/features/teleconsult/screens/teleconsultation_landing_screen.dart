@@ -19,6 +19,7 @@ class TeleconsultationLandingScreen extends StatefulWidget {
   final List<String>? initialSymptoms;
   final double? initialPainSeverity;
   final bool hasPreCheckedSymptoms;
+  final int initialStep;
 
   const TeleconsultationLandingScreen({
     super.key,
@@ -26,6 +27,7 @@ class TeleconsultationLandingScreen extends StatefulWidget {
     this.initialSymptoms,
     this.initialPainSeverity,
     this.hasPreCheckedSymptoms = false,
+    this.initialStep = 0,
   });
 
   @override
@@ -33,7 +35,7 @@ class TeleconsultationLandingScreen extends StatefulWidget {
 }
 
 class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingScreen> {
-  int _step = 0; // 0: Concerns, Body Map & Digital Triage, 1: Specialist Match, 2: Waiting Room
+  late int _step; // 0: Concerns, Body Map & Digital Triage, 1: Specialist Match, 2: Waiting Room
   bool _hasPreCheckedSymptoms = false;
 
   String _selectedSpecialty = 'General Medicine';
@@ -77,6 +79,7 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
   @override
   void initState() {
     super.initState();
+    _step = widget.initialStep;
     _hasPreCheckedSymptoms = widget.hasPreCheckedSymptoms;
 
     if (widget.initialRegion != null) {
@@ -183,6 +186,21 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
     final patientName = patient?.fullName ?? (SessionCoordinator().isHindi ? 'नागरिक' : 'Patient');
     final doctor = _selectedDoctor ?? DoctorRepository().autoSelectDoctor(specialty: _selectedSpecialty);
     
+    if (doctor == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            SessionCoordinator().isHindi
+                ? 'कृपया पहले एक उपलब्ध डॉक्टर का चयन करें।'
+                : (SessionCoordinator().isMarathi
+                    ? 'कृपया आधी उपलब्ध डॉक्टर निवडा.'
+                    : 'Please select an available doctor before starting the call.'),
+          ),
+        ),
+      );
+      return;
+    }
+
     // Register live teleconsultation appointment
     final aptId = 'APT-${DateTime.now().millisecondsSinceEpoch % 100000}';
     final newApt = AppointmentDto(
@@ -1268,12 +1286,29 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
 
   // STEP 1: Matching Specialist with Doctor Specialty Prominently Displayed
   Widget _step1DoctorMatch(SessionCoordinator session, bool isHi, bool isMr) {
-    final allDoctors = DoctorRepository().registeredDoctors;
+    final patientRepo = PatientRepository();
+    final patient = patientRepo.activePatient ?? patientRepo.defaultPatient;
+    final patientSubCentre = patient?.subCentre ?? session.assignedCatchment ?? '';
 
-    final matchingDoctors = allDoctors.where((d) {
-      return d.specialty.toLowerCase().contains(_selectedSpecialty.toLowerCase()) ||
-          _selectedSpecialty == 'General Medicine';
-    }).toList();
+    // Match real registered doctors by patient's sub-centre and specialty
+    final subCentreDoctors = DoctorRepository().getDoctorsForSubCentre(
+      subCentre: patientSubCentre,
+      specialty: _selectedSpecialty,
+    );
+
+    final matchingDoctors = subCentreDoctors.isNotEmpty
+        ? subCentreDoctors
+        : DoctorRepository().registeredDoctors.where((d) {
+            return d.specialty.toLowerCase().contains(_selectedSpecialty.toLowerCase()) ||
+                _selectedSpecialty == 'General Medicine';
+          }).toList();
+
+    // Auto-select first matching doctor if current selection is invalid
+    if (matchingDoctors.isNotEmpty && (_selectedDoctor == null || !matchingDoctors.any((d) => d.doctorId == _selectedDoctor!.doctorId))) {
+      _selectedDoctor = matchingDoctors.first;
+    } else if (matchingDoctors.isEmpty) {
+      _selectedDoctor = null;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1292,17 +1327,26 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
                   'Specialty Filter: $_selectedSpecialty',
                   style: const TextStyle(fontSize: 12, color: RuralCareColors.primary, fontWeight: FontWeight.bold),
                 ),
+                if (patientSubCentre.isNotEmpty)
+                  Text(
+                    'Sub-Centre: $patientSubCentre',
+                    style: const TextStyle(fontSize: 11, color: RuralCareColors.textSecondary, fontWeight: FontWeight.w500),
+                  ),
               ],
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: RuralCareColors.successSoft,
+                color: matchingDoctors.isNotEmpty ? RuralCareColors.successSoft : RuralCareColors.surfaceSubtle,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '${matchingDoctors.isNotEmpty ? matchingDoctors.length : 1} Online',
-                style: const TextStyle(fontSize: 10, color: RuralCareColors.success, fontWeight: FontWeight.bold),
+                '${matchingDoctors.length} Online',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: matchingDoctors.isNotEmpty ? RuralCareColors.success : RuralCareColors.textSecondary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -1310,10 +1354,52 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
         const SizedBox(height: 16),
 
         if (matchingDoctors.isNotEmpty)
-          ...matchingDoctors.map((doc) => _doctorTile(doc))
-        else ...[
-          _doctorTile(DoctorRepository().autoSelectDoctor(specialty: _selectedSpecialty)),
-        ],
+          ...matchingDoctors.map((doc) => _doctorTile(doc, isSel: _selectedDoctor?.doctorId == doc.doctorId))
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: RuralCareColors.border),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: RuralCareColors.surfaceSubtle,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.person_off_rounded, color: RuralCareColors.textSecondary, size: 28),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  isMr ? 'कोणतेही डॉक्टर उपलब्ध नाहीत' : (isHi ? 'कोई डॉक्टर उपलब्ध नहीं है' : 'No doctors available'),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: RuralCareColors.textPrimary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  patientSubCentre.isNotEmpty
+                      ? (isMr
+                          ? 'तुमच्या उप-केंद्रासाठी ($patientSubCentre) सध्या कोणतेही डॉक्टर नोंदणीकृत नाहीत. डॉक्टर उपलब्ध झाल्यावर ते येथे दिसतील.'
+                          : (isHi
+                              ? 'आपके उप-केंद्र ($patientSubCentre) के लिए अभी कोई डॉक्टर पंजीकृत नहीं है। जब कोई डॉक्टर जुड़ेगा, वह यहाँ दिखाई देगा।'
+                              : 'No verified doctor is currently registered for your sub-centre ($patientSubCentre). Once a doctor registers, they will appear here.'))
+                      : (isMr
+                          ? 'सध्या कोणतेही नोंदणीकृत डॉक्टर उपलब्ध नाहीत.'
+                          : (isHi
+                              ? 'वर्तमान में कोई डॉक्टर पंजीकृत नहीं है।'
+                              : 'No verified doctors are currently registered.')),
+                  style: const TextStyle(fontSize: 12, color: RuralCareColors.textSecondary, height: 1.4),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
 
         const SizedBox(height: 20),
 
@@ -1353,45 +1439,48 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
           height: 52,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: RuralCareColors.primary,
+              backgroundColor: (_selectedDoctor != null && matchingDoctors.isNotEmpty)
+                  ? RuralCareColors.primary
+                  : Colors.grey.shade400,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            onPressed: () {
-              // Register appointment with queue number and triage priority
-              final patientRepo = PatientRepository();
-              final sessionCoordinator = SessionCoordinator();
-              final patient = patientRepo.activePatient ??
-                  patientRepo.defaultPatient ??
-                  patientRepo.getOrCreatePatientForIdentifier(sessionCoordinator.currentUserId ?? 'citizen');
-              final doctor = _selectedDoctor ??
-                  DoctorRepository().autoSelectDoctor(specialty: _selectedSpecialty);
+            onPressed: (_selectedDoctor != null && matchingDoctors.isNotEmpty)
+                ? () {
+                    // Register appointment with queue number and triage priority
+                    final patient = patientRepo.activePatient ??
+                        patientRepo.defaultPatient ??
+                        patientRepo.getOrCreatePatientForIdentifier(session.currentUserId ?? 'citizen');
+                    final doctor = _selectedDoctor!;
 
-              final aptRepo = AppointmentRepository();
-              aptRepo.addAppointment(
-                AppointmentDto(
-                  id: 'APT-${DateTime.now().millisecondsSinceEpoch % 100000}',
-                  patientId: patient.id,
-                  patientName: patient.fullName,
-                  doctorName: doctor.name,
-                  specialty: doctor.specialty.isNotEmpty ? doctor.specialty : _selectedSpecialty,
-                  facilityName: doctor.facilityName,
-                  scheduledTime: DateTime.now(),
-                  type: 'TELECONSULTATION',
-                  status: 'WAITING_ROOM',
-                  chiefComplaint: _symptomCtrl.text.trim().isNotEmpty
-                      ? _symptomCtrl.text.trim()
-                      : (_bodySymptoms.isNotEmpty ? _bodySymptoms.join(', ') : 'General Consultation'),
-                  queueNumber: _queueToken,
-                  triagePriority: _calculatedTriage.code,
-                  symptoms: _bodySymptoms,
-                  primaryIssue: _activeBodyZone,
-                ),
-              );
-              setState(() => _step = 2);
-            },
+                    final aptRepo = AppointmentRepository();
+                    aptRepo.addAppointment(
+                      AppointmentDto(
+                        id: 'APT-${DateTime.now().millisecondsSinceEpoch % 100000}',
+                        patientId: patient.id,
+                        patientName: patient.fullName,
+                        doctorName: doctor.name,
+                        specialty: doctor.specialty.isNotEmpty ? doctor.specialty : _selectedSpecialty,
+                        facilityName: doctor.facilityName,
+                        scheduledTime: DateTime.now(),
+                        type: 'TELECONSULTATION',
+                        status: 'WAITING_ROOM',
+                        chiefComplaint: _symptomCtrl.text.trim().isNotEmpty
+                            ? _symptomCtrl.text.trim()
+                            : (_bodySymptoms.isNotEmpty ? _bodySymptoms.join(', ') : 'General Consultation'),
+                        queueNumber: _queueToken,
+                        triagePriority: _calculatedTriage.code,
+                        symptoms: _bodySymptoms,
+                        primaryIssue: _activeBodyZone,
+                      ),
+                    );
+                    setState(() => _step = 2);
+                  }
+                : null,
             child: Text(
-              isMr ? 'प्रतीक्षालयात जा' : (isHi ? 'प्रतीक्षालय में जाएं' : 'Proceed to Waiting Room'),
+              matchingDoctors.isEmpty
+                  ? (isMr ? 'कोणतेही डॉक्टर उपलब्ध नाहीत' : (isHi ? 'कोई डॉक्टर उपलब्ध नहीं है' : 'No Doctors Available'))
+                  : (isMr ? 'प्रतीक्षालयात जा' : (isHi ? 'प्रतीक्षालय में जाएं' : 'Proceed to Waiting Room')),
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
           ),
@@ -1400,11 +1489,10 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
     );
   }
 
-  Widget _doctorTile(RegisteredDoctorAccount doc) {
+  Widget _doctorTile(RegisteredDoctorAccount doc, {bool isSel = false}) {
     final session = SessionCoordinator();
     final isHi = session.isHindi;
     final isMr = session.isMarathi;
-    final isSel = _selectedDoctor?.doctorId == doc.doctorId || _selectedDoctor == null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1495,7 +1583,7 @@ class _TeleconsultationLandingScreenState extends State<TeleconsultationLandingS
         ),
         const SizedBox(height: 4),
         Text(
-          '${_selectedDoctor?.name ?? 'Dr. Neha Kulkarni'} (${_selectedDoctor?.specialty ?? _selectedSpecialty})',
+          '${_selectedDoctor?.name ?? (isHi ? 'चिकित्सक' : (isMr ? 'डॉक्टर' : 'Attending Doctor'))} (${_selectedDoctor?.specialty ?? _selectedSpecialty})',
           style: const TextStyle(fontSize: 12, color: RuralCareColors.primary, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),

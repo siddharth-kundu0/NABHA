@@ -4,6 +4,7 @@ import 'package:ruralcare/core/theme/demo_role_switcher.dart';
 import 'package:ruralcare/app/routes.dart';
 import 'package:ruralcare/data/repositories/doctor_repository.dart';
 import 'package:ruralcare/features/doctor/utils/doctor_strings.dart';
+import 'package:ruralcare/core/services/firebase_auth_service.dart';
 
 /// Doctor Profile, Credentials & Settings Tab
 class DoctorProfileTab extends StatefulWidget {
@@ -248,11 +249,96 @@ class _DoctorProfileTabState extends State<DoctorProfileTab> {
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+
+              // 5. Sign Out Button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  key: const ValueKey('doctor_sign_out_button'),
+                  onPressed: () => _showSignOutDialog(context, session),
+                  icon: const Icon(Icons.logout_rounded, size: 20),
+                  label: Text(
+                    session.isHindi
+                        ? 'लॉग आउट करें'
+                        : (session.isMarathi ? 'लॉग आउट करा' : 'Sign Out'),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: RuralCareColors.criticalSoft,
+                    foregroundColor: RuralCareColors.critical,
+                    elevation: 0,
+                    side: const BorderSide(color: Color(0xFFFCA5A5)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
               const SizedBox(height: 24),
             ],
           ),
         );
       },
+    );
+  }
+
+  void _showSignOutDialog(BuildContext context, SessionCoordinator session) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.logout_rounded, color: RuralCareColors.critical, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              session.isHindi
+                  ? 'लॉग आउट की पुष्टि'
+                  : (session.isMarathi ? 'लॉग आउट पुष्टी' : 'Confirm Sign Out'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          session.isHindi
+              ? 'क्या आप नाभा क्लिनिशियन पोर्टल से लॉग आउट करना चाहते हैं?'
+              : (session.isMarathi
+                  ? 'तुम्ही नाभा क्लिनिशियन पोर्टलवरून लॉग आउट करू इच्छिता का?'
+                  : 'Are you sure you want to sign out from the NABHA Clinician Portal?'),
+          style: const TextStyle(fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              session.isHindi ? 'रद्द करें' : (session.isMarathi ? 'रद्द करा' : 'Cancel'),
+              style: const TextStyle(color: RuralCareColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: RuralCareColors.critical,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await FirebaseAuthService().signOut();
+              } catch (_) {}
+              DoctorRepository().clearActiveDoctor();
+              session.clearAuthenticatedUser();
+              if (context.mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            },
+            child: Text(
+              session.isHindi ? 'लॉग आउट' : (session.isMarathi ? 'लॉग आउट' : 'Sign Out'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

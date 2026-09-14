@@ -33,33 +33,14 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
   bool _isVideoOff = false;
   bool _isSpeakerOn = true;
   bool _showTranscript = false;
-  int _callSeconds = 153;
+  int _callSeconds = 0;
   Timer? _timer;
   late final List<Map<String, String>> _transcript;
 
   @override
   void initState() {
     super.initState();
-    _transcript = [
-      {
-        'speaker': widget.doctorName,
-        'time': '02:15',
-        'text': 'नमस्ते ${widget.patientName} जी, आज आपकी तबीयत कैसी है? कोई सिरदर्द या चक्कर?',
-        'isDoctor': 'true',
-      },
-      {
-        'speaker': '${widget.patientName} (Patient)',
-        'time': '02:22',
-        'text': 'डॉक्टर साहिबा, पैरों में हल्की सूजन है लेकिन सिरदर्द ठीक है।',
-        'isDoctor': 'false',
-      },
-      {
-        'speaker': widget.doctorName,
-        'time': '02:40',
-        'text': 'बीपी मशीन की रीडिंग 142/92 आई है। हम दवा की खुराक चालू रखेंगे।',
-        'isDoctor': 'true',
-      },
-    ];
+    _transcript = [];
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _callSeconds++);
     });
@@ -450,7 +431,20 @@ class _LiveTeleconsultRoomScreenState extends State<LiveTeleconsultRoomScreen> {
                               ],
                             ),
                             const Divider(height: 12, color: Colors.white24),
-                            ..._transcript.map((line) => Padding(
+                            if (_transcript.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  isHi
+                                      ? 'द्विभाषी संभाषण ट्रांसक्रिप्शन सक्रिय है। जब प्रतिभागी बोलेंगे, पाठ यहाँ दिखाई देगा।'
+                                      : (isMr
+                                          ? 'द्विभाषिक संभाषण मजकूर सक्रिय आहे. सहभागी बोलू लागल्यावर मजकूर येथे दिसेल.'
+                                          : 'Bilingual speech transcription active. Text will stream here as participants speak.'),
+                                  style: const TextStyle(fontSize: 11, color: Colors.white70, fontStyle: FontStyle.italic),
+                                ),
+                              )
+                            else
+                              ..._transcript.map((line) => Padding(
                               padding: const EdgeInsets.only(bottom: 6),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,

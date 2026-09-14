@@ -354,34 +354,6 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           );
         }
 
-        // Default verified doctors if none registered yet
-        if (_docRepo.registeredDoctors.isEmpty) {
-          unifiedUsers.add(
-            _UnifiedAdminUser(
-              id: 'DOC-MH-8421-204',
-              name: 'Dr. Neha Kulkarni',
-              roleDisplay: 'Obstetrician & Gynecologist',
-              roleType: 'DOCTOR',
-              facilityName: 'Baramati Sub-District Hospital',
-              contact: '+91 98230 44221',
-              status: _deactivatedUserIds.contains('DOC-MH-8421-204') ? 'Deactivated' : 'Active',
-              badgeColor: const Color(0xFF005140),
-            ),
-          );
-          unifiedUsers.add(
-            _UnifiedAdminUser(
-              id: 'DOC-MH-8421-305',
-              name: 'Dr. Vikram Joshi',
-              roleDisplay: 'Pediatric Specialist',
-              roleType: 'DOCTOR',
-              facilityName: 'Aundh District Hospital',
-              contact: '+91 98230 88990',
-              status: _deactivatedUserIds.contains('DOC-MH-8421-305') ? 'Deactivated' : 'Active',
-              badgeColor: const Color(0xFF005140),
-            ),
-          );
-        }
-
         // 4. Facility Staff & Admins from FacilityRepository
         for (final staff in _facRepo.staffRoster) {
           unifiedUsers.add(

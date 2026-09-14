@@ -567,6 +567,7 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     }
 
     final doctorRepo = DoctorRepository();
+    final session = SessionCoordinator();
 
     showModalBottomSheet(
       context: context,
@@ -728,25 +729,48 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                 const SizedBox(height: 14),
 
                 // Auto-Assigned Doctor Info Banner
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: RuralCareColors.surfaceSubtle,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: RuralCareColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.verified_user_rounded, color: RuralCareColors.primary, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'On-Duty Clinician: ${doctorRepo.autoSelectDoctor(specialty: _selectedSpecialty).name} ($_selectedSpecialty)',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: RuralCareColors.textPrimary),
-                        ),
+                Builder(
+                  builder: (_) {
+                    final onDutyDoc = doctorRepo.autoSelectDoctor(
+                      specialty: _selectedSpecialty,
+                      subCentre: patient.subCentre,
+                    );
+                    final hasDoc = onDutyDoc != null;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: hasDoc ? RuralCareColors.surfaceSubtle : const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: hasDoc ? RuralCareColors.border : const Color(0xFFFDBA74)),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            hasDoc ? Icons.verified_user_rounded : Icons.info_outline_rounded,
+                            color: hasDoc ? RuralCareColors.primary : const Color(0xFFC05621),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              hasDoc
+                                  ? 'On-Duty Clinician: ${onDutyDoc.name} ($_selectedSpecialty)'
+                                  : (session.isMarathi
+                                      ? 'या उप-केंद्रासाठी कोणतेही डॉक्टर उपलब्ध नाहीत'
+                                      : (session.isHindi
+                                          ? 'इस उप-केंद्र के लिए कोई डॉक्टर उपलब्ध नहीं है'
+                                          : 'No on-duty doctors registered for this sub-centre')),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: hasDoc ? RuralCareColors.textPrimary : const Color(0xFF9A3412),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -756,10 +780,25 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
                   height: 52,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Auto-select registered or on-duty doctor for this specialty
                       final autoDoctor = doctorRepo.autoSelectDoctor(
                         specialty: _selectedSpecialty,
+                        subCentre: patient.subCentre,
                       );
+                      if (autoDoctor == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              session.isMarathi
+                                  ? 'सध्या कोणतेही डॉक्टर उपलब्ध नाहीत.'
+                                  : (session.isHindi
+                                      ? 'वर्तमान में कोई डॉक्टर उपलब्ध नहीं है।'
+                                      : 'No doctors available for this sub-centre yet.'),
+                            ),
+                            backgroundColor: RuralCareColors.critical,
+                          ),
+                        );
+                        return;
+                      }
                       final doctorName = autoDoctor.name;
 
                       // Validation: Single Appointment Per Doctor Conflict Check
